@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: Backend
+  # 数据库相关
+  datasource:
+    url: jdbc:mysql://localhost:3306/knowledgebase?useSSL=false&serverTimezone=UTC
+    username: root    # 启动前请修改为你的数据库用户名和密码
+    password: 123456
+  web:
+    error:
+      whitelabel:
+        enabled: false # 使用默认的错误页面

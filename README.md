@@ -1,1 +1,2 @@
 # 一款基于Spring与Vue的智能知识库助手
+启动后端前，请将resources/application.yml中的数据库用户名及密码更改为自己的用户名和密码
