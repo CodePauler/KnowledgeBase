@@ -20,7 +20,8 @@ public class UserService {
      * @param password: 注册密码-未加密
      * @param email:    注册邮箱
      * @return User
-     * @description 注册用户
+     * @TODO 登录
+     * @HACK 注册未对密码加密
      * @date 2025/12/11 23:29
      */
     public User register(String username, String password, String email){
@@ -35,6 +36,24 @@ public class UserService {
                 .email(email)
                 .build();
         userMapper.insert(user);
+        return user;
+    }
+
+    /**
+     * @param username:
+     * @param password: 原始密码
+     * @return User
+     * @description TODO
+     * @date 2025/12/11 23:53
+     */
+    public User login(String username, String password){
+        User user = userMapper.selectByUsername(username);
+        if(user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        if(!user.getPassword().equals(password)){
+            throw new RuntimeException("密码错误");
+        }
         return user;
     }
 }

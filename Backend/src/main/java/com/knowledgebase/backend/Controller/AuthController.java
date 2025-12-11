@@ -12,7 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @description: 授权相关
- * TODO: 实现注册、登录、登出、权限验证等功能
+ * TODO: 登录、登出
+ * HACK: 注册未对密码加密
  * @date: 2025/12/11 23:33
  * @version: 1.0
  */
