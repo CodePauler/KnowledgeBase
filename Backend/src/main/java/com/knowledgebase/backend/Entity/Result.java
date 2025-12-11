@@ -1,4 +1,4 @@
-package com.knowledgebase.backend.Entity;
+package com.knowledgebase.backend.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -41,7 +41,7 @@ public class Result<T> {
                 .build();
     }
 
-    public static <T> Result<T> error(String message) {     // 服务器内部错误
+    public static <T> Result<T> error(String message) {     // 常用 服务器内部错误
         return error(500, message);
     }
 
@@ -49,7 +49,7 @@ public class Result<T> {
         return error(401, "Unauthorized");
     }
 
-    public static <T> Result<T> forbidden() {               // 未授权
+    public static <T> Result<T> forbidden() {               // 越权访问
         return error(403, "Forbidden");
     }
 
