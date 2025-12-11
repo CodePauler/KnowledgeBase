@@ -1,4 +1,4 @@
-package com.knowledgebase.backend.Controller;
+package com.knowledgebase.backend.controller;
 
 import org.springframework.boot.webmvc.error.ErrorController;
 import org.springframework.web.bind.annotation.RequestMapping;

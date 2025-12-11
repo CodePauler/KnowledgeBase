@@ -13,10 +13,10 @@ spring:
 
 # mybatis配置
 mybatis:
-  mapper-locations: classpath:mapper/*.xml
-  type-aliases-package: com.knowledgebase.backend.entity
+  mapper-locations: classpath:mapper/*.xml  # mapper映射文件位于resources/mapper/*.xml
+  type-aliases-package: com.knowledgebase.backend.entity  # 映射的实体类位于 entity/*.java
   configuration:
-    map-underscore-to-camel-case: true
+    map-underscore-to-camel-case: true # 驼峰映射
 
 # JWT 配置
 jwt:
