@@ -3,6 +3,7 @@ package com.knowledgebase.backend.service;
 import com.knowledgebase.backend.dao.UserMapper;
 import com.knowledgebase.backend.entity.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 /**
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor // 为注入类自动生成构造函数，取代@Autowired
 public class UserService {
     private final UserMapper userMapper;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     /**
      * @param username: 注册用户名
@@ -32,7 +34,7 @@ public class UserService {
         }
         User user = User.builder()
                 .username(username)
-                .password(password)
+                .password(passwordEncoder.encode(password))
                 .email(email)
                 .build();
         userMapper.insert(user);
