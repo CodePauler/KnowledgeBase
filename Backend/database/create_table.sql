@@ -1,0 +1,53 @@
+CREATE DATABASE IF NOT EXISTS `knowledgebase`;
+USE `knowledgebase`;
+
+-- 用户表
+CREATE TABLE IF NOT EXISTS `user` (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '用户ID',
+  `username` VARCHAR(50) NOT NULL UNIQUE COMMENT '用户名',
+  `password` VARCHAR(255) NOT NULL COMMENT 'BCrypt加密密码',
+  `email` VARCHAR(100) COMMENT '邮箱',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  INDEX idx_username (username)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 知识库空间表
+CREATE TABLE IF NOT EXISTS `space` (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '空间ID',
+  `user_id` BIGINT NOT NULL COMMENT '所有者ID',
+  `name` VARCHAR(100) NOT NULL COMMENT '空间名称',
+  `description` TEXT COMMENT '空间描述',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  FOREIGN KEY (user_id) REFERENCES `user`(id) ON DELETE CASCADE,
+  INDEX idx_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 知识条目表
+CREATE TABLE IF NOT EXISTS `knowledge` (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '知识ID',
+  `space_id` BIGINT NOT NULL COMMENT '所属空间ID',
+  `title` VARCHAR(255) NOT NULL COMMENT '知识标题',
+  `type` ENUM('DOC_UNSTRUCTURED', 'DOC_STRUCTURED', 'MANUAL_STRUCTURED') DEFAULT 'MANUAL_STRUCTURED' COMMENT '知识类型',
+  `content` LONGTEXT COMMENT '知识内容(手工录入)',
+  `parent_id` BIGINT COMMENT '父知识ID(层级)',
+  `oss_key` VARCHAR(500) COMMENT 'OSS文件路径',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  FOREIGN KEY (space_id) REFERENCES `space`(id) ON DELETE CASCADE,
+  FOREIGN KEY (parent_id) REFERENCES `knowledge`(id) ON DELETE CASCADE,
+  INDEX idx_space_parent (space_id, parent_id),
+  FULLTEXT INDEX ft_title_content (title, content)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 知识向量表(用于RAG)
+CREATE TABLE IF NOT EXISTS `knowledge_embedding` (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '向量ID',
+  `knowledge_id` BIGINT NOT NULL COMMENT '知识ID',
+  `text_chunk` LONGTEXT NOT NULL COMMENT '文本片段',
+  `embedding` MEDIUMBLOB COMMENT '向量值(存储为二进制或JSON)',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  FOREIGN KEY (knowledge_id) REFERENCES `knowledge`(id) ON DELETE CASCADE,
+  INDEX idx_knowledge_id (knowledge_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
