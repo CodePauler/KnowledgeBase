@@ -10,10 +10,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @description: 授权相关
  * TODO: 登录、登出
- * HACK: 注册未对密码加密
  * @date: 2025/12/11 23:33
  * @version: 1.0
  */
@@ -24,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     private final UserService userService;
 
-    @PostMapping
+    @PostMapping("/register")
     public Result<User> register(@RequestParam String username,
                                  @RequestParam String password,
                                  @RequestParam(required = false) String email) {
@@ -34,6 +36,22 @@ public class AuthController {
         } catch (Exception e) {
             log.error("注册失败: {}", e.getMessage());
             return Result.error(e.getMessage());
+        }
+    }
+
+    @PostMapping("/login")
+    public Result<Map<String,Object>> login(@RequestParam String username,
+                                            @RequestParam String password){
+        try{
+            User user = userService.login(username, password);
+            Map<String, Object> data = new HashMap<>();
+            data.put("userId",user.getId());
+            data.put("username",user.getUsername());
+
+            return Result.success(data,"login success");
+        } catch (Exception e) {
+            log.error("登录失败", e);
+            return Result.error(401,e.getMessage());
         }
     }
 }
