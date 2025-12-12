@@ -5,6 +5,7 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -13,6 +14,7 @@ import java.util.Date;
  * @description: JWT令牌签发与解析
  * @date: 2025/12/12 19:29
  */
+@Component
 public class JwtTokenUtil {
 
     @Value("${jwt.secret}")

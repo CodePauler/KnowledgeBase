@@ -3,12 +3,10 @@ package com.knowledgebase.backend.controller;
 import com.knowledgebase.backend.entity.Result;
 import com.knowledgebase.backend.entity.User;
 import com.knowledgebase.backend.service.UserService;
+import com.knowledgebase.backend.utils.JwtTokenUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +22,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 public class AuthController {
+
     private final UserService userService;
+    private final JwtTokenUtil jwtTokenUtil;
 
     @PostMapping("/register")
     public Result<User> register(@RequestParam String username,
@@ -44,7 +44,10 @@ public class AuthController {
                                             @RequestParam String password){
         try{
             User user = userService.login(username, password);
+            String token = jwtTokenUtil.generateToken(user.getId(),user.getUsername());
+
             Map<String, Object> data = new HashMap<>();
+            data.put("token", token);
             data.put("userId",user.getId());
             data.put("username",user.getUsername());
 
@@ -52,6 +55,37 @@ public class AuthController {
         } catch (Exception e) {
             log.error("登录失败", e);
             return Result.error(401,e.getMessage());
+        }
+    }
+
+    @PostMapping("/refresh") // 刷新token
+    public Result<Map<String, Object>> refreshToken(@RequestHeader("Authorization") String authHeader) {
+        try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return Result.error(400, "无效的 Authorization 头");
+            }
+
+            String oldToken = authHeader.substring(7);
+
+            if (!jwtTokenUtil.validateToken(oldToken)) {
+                return Result.error(401, "Token 无效或已过期");
+            }
+
+            String username = jwtTokenUtil.getUsernameFromToken(oldToken);
+            Long userId = jwtTokenUtil.getUserIdFromToken(oldToken);
+
+            String newToken = jwtTokenUtil.generateToken(userId, username);
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("token", newToken);
+            data.put("userId", userId);
+            data.put("username", username);
+
+            return Result.success(data, "Token 刷新成功");
+
+        } catch (Exception e) {
+            log.error("刷新 Token 失败", e);
+            return Result.error(500, "Token 刷新失败");
         }
     }
 }

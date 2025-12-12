@@ -53,7 +53,7 @@ public class UserService {
         if(user == null) {
             throw new RuntimeException("用户不存在");
         }
-        if(!user.getPassword().equals(password)){
+        if(!passwordEncoder.matches(password,user.getPassword())){
             throw new RuntimeException("密码错误");
         }
         return user;
