@@ -1,5 +1,7 @@
 package com.knowledgebase.backend.controller;
 
+import com.knowledgebase.backend.dto.LoginResponseDto;
+import com.knowledgebase.backend.dto.RegisterResponseDto;
 import com.knowledgebase.backend.entity.Result;
 import com.knowledgebase.backend.entity.User;
 import com.knowledgebase.backend.service.UserService;
@@ -27,12 +29,17 @@ public class AuthController {
     private final JwtTokenUtil jwtTokenUtil;
 
     @PostMapping("/register")
-    public Result<User> register(@RequestParam String username,
+    public Result<RegisterResponseDto> register(@RequestParam String username,
                                  @RequestParam String password,
                                  @RequestParam(required = false) String email) {
         try {
             User user = userService.register(username, password, email);
-            return Result.success(user,"注册成功");
+            RegisterResponseDto dto = RegisterResponseDto.builder()
+                    .id(user.getId())
+                    .username(user.getUsername())
+                    .email(user.getEmail())
+                    .build();
+            return Result.success(dto,"注册成功");
         } catch (Exception e) {
             log.error("注册失败: {}", e.getMessage());
             return Result.error(e.getMessage());
@@ -40,18 +47,18 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public Result<Map<String,Object>> login(@RequestParam String username,
-                                            @RequestParam String password){
+    public Result<LoginResponseDto> login(@RequestParam String username,
+                                  @RequestParam String password){
         try{
             User user = userService.login(username, password);
             String token = jwtTokenUtil.generateToken(user.getId(),user.getUsername());
 
-            Map<String, Object> data = new HashMap<>();
-            data.put("token", token);
-            data.put("userId",user.getId());
-            data.put("username",user.getUsername());
-
-            return Result.success(data,"login success");
+            LoginResponseDto dto = LoginResponseDto.builder()
+                    .token(token)
+                    .userId(user.getId())
+                    .username(user.getUsername())
+                    .build();
+            return Result.success(dto,"登录成功");
         } catch (Exception e) {
             log.error("登录失败", e);
             return Result.error(401,e.getMessage());
