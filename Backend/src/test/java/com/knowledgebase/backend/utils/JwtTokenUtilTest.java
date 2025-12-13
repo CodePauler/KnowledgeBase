@@ -1,6 +1,6 @@
 package com.knowledgebase.backend.utils;
 
-import io.jsonwebtoken.Claims;
+import com.knowledgebase.backend.security.jwt.JwtTokenUtil;
 import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.Test;
 
