@@ -1,4 +1,4 @@
-package com.knowledgebase.backend.utils;
+package com.knowledgebase.backend.security.jwt;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
