@@ -5,7 +5,7 @@ import com.knowledgebase.backend.dto.RegisterResponseDto;
 import com.knowledgebase.backend.entity.Result;
 import com.knowledgebase.backend.entity.User;
 import com.knowledgebase.backend.service.UserService;
-import com.knowledgebase.backend.utils.JwtTokenUtil;
+import com.knowledgebase.backend.security.jwt.JwtTokenUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
