@@ -4,7 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.knowledgebase.backend.dao.SpaceMapper">
 
-    <resultMap id="SpaceResultMapper" type="Space">
+    <resultMap id="SpaceResultMap" type="Space">
         <id column="id" property="id"/>
         <result column="user_id" property="userId"/>
         <result column="name" property="name"/>
