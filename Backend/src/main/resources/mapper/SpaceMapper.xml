@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.knowledgebase.backend.dao.SpaceMapper">
+
+    <resultMap id="SpaceResultMapper" type="Space">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="Space" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `space` (user_id, name, description)
+        VALUES (#{userId}, #{name}, #{description})
+    </insert>
+
+    <select id="selectById" parameterType="long" resultMap="SpaceResultMap">
+        SELECT * FROM `space` WHERE id = #{id}
+    </select>
+
+    <select id="selectByUserId" parameterType="long" resultMap="SpaceResultMap">
+        SELECT * FROM `space` WHERE user_id = #{userId}
+    </select>
+
+    <update id="updateById" parameterType="Space">
+        UPDATE `space`
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="description != null">description = #{description},</if>
+            updated_at = CURRENT_TIMESTAMP
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="long">
+        DELETE FROM `space` WHERE id = #{id}
+    </delete>
+</mapper>
