@@ -109,7 +109,8 @@ public class SpaceController {
     /**
      * @param id: Space id
      * @return Result<Void>
-     * @description 删除知识库
+     * @TODO: 也需要加鉴权 用户只能删除自己的space
+     * @description 用户点击删除，根据space id删除知识库
      */
     @DeleteMapping("/{id}")
     public Result<Void> deleteSpace(@PathVariable Long id) {
