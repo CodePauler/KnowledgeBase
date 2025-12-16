@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CreateSpaceResponseDto {
+public class SpaceCreateResponseDto {
     private String name;
     private String description;
 }

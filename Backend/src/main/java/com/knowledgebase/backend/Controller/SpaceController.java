@@ -1,6 +1,7 @@
 package com.knowledgebase.backend.controller;
 
-import com.knowledgebase.backend.dto.CreateSpaceResponseDto;
+import com.knowledgebase.backend.dto.SpaceCreateRequestDto;
+import com.knowledgebase.backend.dto.SpaceCreateResponseDto;
 import com.knowledgebase.backend.entity.Result;
 import com.knowledgebase.backend.entity.Space;
 import com.knowledgebase.backend.service.SpaceService;
@@ -24,8 +25,7 @@ public class SpaceController {
 
     /**
      * @param userId: 用户id
-     * @param name: space名称
-     * @param description: space描述
+     * @param req: 包含name和description的请求体
      * @description 用户创建space
      * 这里采用认证信息与业务数据分离的设计，name和description通过请求参数传递，
      * 而userId通过@RequestAttribute从认证信息中获取，确保数据的完整性和安全性。
@@ -34,12 +34,11 @@ public class SpaceController {
      * @date 2025/12/13 23:44
      */
     @PostMapping
-    public Result<CreateSpaceResponseDto> createSpace(@RequestAttribute Long userId,
-                                     @RequestParam String name,
-                                     @RequestParam(required = false) String description) {
+    public Result<SpaceCreateResponseDto> createSpace(@RequestAttribute Long userId,
+                                                      @RequestBody SpaceCreateRequestDto req) {
         try {
-            Space space = spaceService.createSpace(userId, name, description);
-            CreateSpaceResponseDto dto = CreateSpaceResponseDto.builder()
+            Space space = spaceService.createSpace(userId, req.getName(), req.getDescription());
+            SpaceCreateResponseDto dto = SpaceCreateResponseDto.builder()
                     .name(space.getName())
                     .description(space.getDescription())
                     .build();
@@ -49,6 +48,7 @@ public class SpaceController {
             return Result.error(e.getMessage());
         }
     }
+
 
     /**
      * @param id: space的id
@@ -87,7 +87,7 @@ public class SpaceController {
     }
 
     /**
-     * @param id: Spaceid
+     * @param id: Space id
      * @param name: new Space name
      * @param description: new Space description
      * @return Result<Void>
