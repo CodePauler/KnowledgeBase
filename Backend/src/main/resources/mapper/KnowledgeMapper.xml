@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.knowledgebase.backend.dao.KnowledgeMapper">
+
+    <resultMap id="KnowledgeResultMap" type="Knowledge">
+        <id property="id" column="id"/>
+        <result property="spaceId" column="space_id"/>
+        <result property="title" column="title"/>
+        <result property="type" column="type"/>
+        <result property="content" column="content"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="ossKey" column="oss_key"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO knowledge (space_id, title, type, content, parent_id, oss_key)
+        VALUES (#{spaceId}, #{title}, #{type}, #{content}, #{parentId}, #{ossKey})
+    </insert>
+
+    <update id="updateById">
+        UPDATE knowledge
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="content != null">content = #{content},</if>
+            <!-- parentId 允许置空，所以用一个额外参数判断是否传了；简化起见：前端不传就保持不变，传 null 则无法区分 -->
+            <if test="parentId != null">parent_id = #{parentId},</if>
+            <if test="ossKey != null">oss_key = #{ossKey},</if>
+            updated_at = CURRENT_TIMESTAMP
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM knowledge WHERE id = #{id}
+    </delete>
+
+    <select id="selectById" resultMap="KnowledgeResultMap">
+        SELECT * FROM knowledge WHERE id = #{id}
+    </select>
+
+    <select id="listBySpace" resultMap="KnowledgeResultMap">
+        SELECT * FROM knowledge
+        WHERE space_id = #{spaceId}
+        ORDER BY parent_id IS NOT NULL, parent_id, id
+    </select>
+
+    <select id="listBySpaceAndParent" resultMap="KnowledgeResultMap">
+        SELECT * FROM knowledge
+        WHERE space_id = #{spaceId}
+        <if test="parentId == null">
+            AND parent_id IS NULL
+        </if>
+        <if test="parentId != null">
+            AND parent_id = #{parentId}
+        </if>
+        ORDER BY id
+    </select>
+
+    <select id="existsInSpace" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM knowledge
+        WHERE id = #{id} AND space_id = #{spaceId}
+    </select>
+
+</mapper>

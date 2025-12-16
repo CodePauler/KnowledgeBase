@@ -19,7 +19,7 @@ public class Knowledge {
     private Long id;                    // 知识id
     private Long spaceId;               // 所属空间id
     private String title;               // 知识标题
-    private String type;                // 知识类型 DOC MANUAL
+    private KnowledgeType type;
     private String content;             // 知识内容（手工录入类知识）
     private Long parentId;              // 父知识id
     private String ossKey;              // OSS文件路径
