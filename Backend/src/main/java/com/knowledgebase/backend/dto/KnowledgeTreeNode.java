@@ -19,5 +19,6 @@ public class KnowledgeTreeNode {
     private String type;
     private Long parentId;
 
+    @Builder.Default // Builder注解不会显示初始化children为ArrayList，需要加此注解
     private List<KnowledgeTreeNode> children = new ArrayList<>();
 }
