@@ -17,9 +17,9 @@ public class KnowledgeService {
 
     private final KnowledgeMapper knowledgeMapper;
 
+
     @Transactional
     public Knowledge create(KnowledgeCreateRequestDto req) {
-        // 课程设计：简单校验
         if (req.getSpaceId() == null) throw new IllegalArgumentException("spaceId不能为空");
         if (req.getTitle() == null || req.getTitle().isBlank()) throw new IllegalArgumentException("title不能为空");
         if (req.getType() == null) throw new IllegalArgumentException("type不能为空");
@@ -67,12 +67,12 @@ public class KnowledgeService {
         return knowledgeMapper.selectById(id);
     }
 
+    // 因为表里 parent_id 外键是 ON DELETE CASCADE，所以子节点会一起删，需要开启Transactional
     @Transactional
     public void delete(Long id) {
         // 存在性检查
         get(id);
         knowledgeMapper.deleteById(id);
-        // 因为你表里 parent_id 外键是 ON DELETE CASCADE，所以子节点会一起删
     }
 
     public List<Knowledge> listBySpace(Long spaceId) {

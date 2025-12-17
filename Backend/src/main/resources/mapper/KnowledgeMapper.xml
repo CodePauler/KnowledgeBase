@@ -42,6 +42,10 @@
         SELECT * FROM knowledge WHERE id = #{id}
     </select>
 
+    <!--
+    列出某space下的 所有 知识 包括子知识
+    在数据库层预先把“树”的阅读顺序排好
+    顺序为 根节点 parentId id-->
     <select id="listBySpace" resultMap="KnowledgeResultMap">
         SELECT * FROM knowledge
         WHERE space_id = #{spaceId}
