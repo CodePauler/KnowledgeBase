@@ -6,7 +6,10 @@ import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobContainerClientBuilder;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.BlobServiceClientBuilder;
+import com.azure.storage.blob.models.BlobHttpHeaders;
 import com.azure.storage.blob.models.BlobStorageException;
+import com.knowledgebase.backend.dto.FileUploadResponseDto;
+import com.knowledgebase.backend.service.FileDownloadDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -20,7 +23,7 @@ import java.util.UUID;
 
 /**
  * Azure Blob Storage 客户端封装
- * @description 支持文件上传到 Azure Blob Storage，返回文件 URL
+ * @description 支持文件上传到 Azure Blob Storage，返回文件 key
  * 支持文件类型："pdf", "doc", "docx", "txt", "png", "jpg", "jpeg"
  * 每个用户的文件分开存储
  * 形如 baseFolder/user-userId/category/timestamp-uuid.extension
@@ -45,14 +48,13 @@ public class AzureBlobClient {
      * @param folder: 文件的分类文件夹，如common、avatar等
      * @param userId: userId 从JWT解析得到
      * @return String blob url
-     * @description 上传文件到 Azure Blob Storage，返回文件 URL
+     * @description 上传文件到 Azure Blob Storage，返回文件 key
      */
-    public String upload(MultipartFile file, String folder, Long userId) {
+    public FileUploadResponseDto upload(MultipartFile file, String folder, Long userId) {
         validateFile(file);
         String category = (folder == null || folder.isBlank()) ? "common" : folder.trim(); // 默认上传的是文档文件，存common
         String extension = getExtension(file.getOriginalFilename());    // 取后缀
         String blobName = buildBlobName(category, userId, extension);   // 构建文件名
-
         BlobServiceClient serviceClient = buildServiceClient();
         BlobContainerClient containerClient = getOrCreateContainer(serviceClient);
         BlobClient blobClient = new BlobClientBuilder()
@@ -64,7 +66,12 @@ public class AzureBlobClient {
 
         try (InputStream inputStream = file.getInputStream()) {
             blobClient.upload(inputStream, file.getSize(), true);
-            return blobClient.getBlobUrl();
+            BlobHttpHeaders headers = new BlobHttpHeaders()
+                    .setContentType(resolveContentType(file.getContentType(), extension));
+            blobClient.setHttpHeaders(headers);
+            return FileUploadResponseDto.builder()
+                    .ossKey(blobName)
+                    .build();
         } catch (IOException e) {
             log.error("Failed to read upload file", e);
             throw new RuntimeException("Failed to read upload file", e);
@@ -72,6 +79,29 @@ public class AzureBlobClient {
             log.error("Azure Blob upload failed: {}", e.getMessage(), e);
             throw new RuntimeException("Upload to Azure Blob failed", e);
         }
+    }
+
+    /**
+     * @description: 下载文件
+     * @param blobName: 文件的blobName
+     * @return FileDownloadDto 文件下载DTO
+     */
+    public FileDownloadDto download(String blobName) {
+        BlobServiceClient serviceClient = buildServiceClient();
+        BlobContainerClient containerClient = getOrCreateContainer(serviceClient);
+        BlobClient blobClient = containerClient.getBlobClient(blobName);
+        if (!blobClient.exists()) {
+            throw new IllegalArgumentException("Blob not found: " + blobName);
+        }
+        String contentType = blobClient.getProperties().getContentType();
+        long length = blobClient.getProperties().getBlobSize();
+        String filename = extractFilename(blobName);
+        return FileDownloadDto.builder()
+                .stream(blobClient.openInputStream())
+                .contentLength(length)
+                .contentType((contentType == null || contentType.isBlank()) ? "application/octet-stream" : contentType)
+                .filename(filename)
+                .build();
     }
 
     /**
@@ -156,5 +186,42 @@ public class AzureBlobClient {
                 .append(".")
                 .append(extension);
         return name.toString();
+    }
+
+    /**
+     * @param contentType : 文件内容类型
+     * @param extension : 文件后缀
+     * @return String 解析后的内容类型(header中的contentType)
+     * @description: 根据文件扩展名解析内容类型
+     */
+    private String resolveContentType(String contentType, String extension) {
+        if (contentType != null && !contentType.isBlank()) {
+            return contentType;
+        }
+        return switch (extension.toLowerCase(Locale.ROOT)) {
+            case "pdf" -> "application/pdf";
+            case "doc" -> "application/msword";
+            case "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            case "txt" -> "text/plain";
+            case "png" -> "image/png";
+            case "jpg", "jpeg" -> "image/jpeg";
+            default -> "application/octet-stream";
+        };
+    }
+
+    /**
+     * @param blobName : 文件的blobName
+     * @return String 文件名
+     * @description: 从blobName中提取文件名
+     */
+    private String extractFilename(String blobName) {
+        if (blobName == null || blobName.isBlank()) {
+            return "file";
+        }
+        int idx = blobName.lastIndexOf('/');
+        if (idx >= 0 && idx < blobName.length() - 1) {
+            return blobName.substring(idx + 1);
+        }
+        return blobName;
     }
 }

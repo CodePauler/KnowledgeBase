@@ -1,5 +1,7 @@
 package com.knowledgebase.backend.service;
 
+import com.knowledgebase.backend.dto.FileUploadResponseDto;
+import com.knowledgebase.backend.service.FileDownloadDto;
 import com.knowledgebase.backend.utils.AzureBlobClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,7 +21,12 @@ public class AzureBlobStorageService implements FileStorageInterface {
      * @return String 上传后文件的访问url
      */
     @Override
-    public String upload(MultipartFile file, String category, Long userId) {
+    public FileUploadResponseDto upload(MultipartFile file, String category, Long userId) {
         return azureBlobClient.upload(file, category, userId);
+    }
+
+    @Override
+    public FileDownloadDto download(String ossKey) {
+        return azureBlobClient.download(ossKey);
     }
 }
