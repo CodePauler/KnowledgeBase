@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class KnowledgeUpdateRequestDto {
-    private String title;
-    private String content;
-    private Long parentId;
-    private String ossKey;
+    private String title;   // 知识名
+    private String content; // 知识内容
+    private Long parentId;  // 父知识id
+    private String ossKey;  // osskey
 }
