@@ -1,5 +1,6 @@
 package com.knowledgebase.backend.controller;
 
+import com.knowledgebase.backend.dto.FileUploadResponseDto;
 import com.knowledgebase.backend.entity.Result;
 import com.knowledgebase.backend.service.FileStorageInterface;
 import lombok.RequiredArgsConstructor;
@@ -31,12 +32,12 @@ public class FileUploadController {
      * @description 支持 pdf/doc/docx/txt/png/jpg/jpeg 上传，返回 Azure Blob 的访问 URL
      */
     @PostMapping("/upload")
-    public Result<String> upload(@RequestAttribute Long userId,
+    public Result<FileUploadResponseDto> upload(@RequestAttribute Long userId,
                                  @RequestParam(defaultValue = "common") String category,
                                  @RequestParam("file") MultipartFile file) {
         try {
-            String url = fileStorageService.upload(file, category, userId);
-            return Result.success(url, "File uploaded");
+            FileUploadResponseDto res = fileStorageService.upload(file, category, userId);
+            return Result.success(res, "File uploaded");
         } catch (IllegalArgumentException e) {
             return Result.error(400, e.getMessage());
         } catch (Exception e) {

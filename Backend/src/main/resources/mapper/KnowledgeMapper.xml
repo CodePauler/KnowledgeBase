@@ -34,6 +34,13 @@
         WHERE id = #{id}
     </update>
 
+    <update id="updateOssKey">
+        UPDATE knowledge
+        SET oss_key = #{ossKey},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
     <delete id="deleteById">
         DELETE FROM knowledge WHERE id = #{id}
     </delete>

@@ -1,11 +1,14 @@
 package com.knowledgebase.backend.service;
 
 import com.knowledgebase.backend.dao.KnowledgeMapper;
+import com.knowledgebase.backend.dto.FileUploadResponseDto;
+import com.knowledgebase.backend.dto.FileUploadResponseDto;
 import com.knowledgebase.backend.dto.KnowledgeCreateRequestDto;
 import com.knowledgebase.backend.dto.KnowledgeTreeNode;
 import com.knowledgebase.backend.dto.KnowledgeUpdateRequestDto;
 import com.knowledgebase.backend.entity.Knowledge;
 import com.knowledgebase.backend.service.FileStorageInterface;
+import com.knowledgebase.backend.service.FileDownloadDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +21,13 @@ import java.util.*;
 public class KnowledgeService {
 
     private final KnowledgeMapper knowledgeMapper;
+    
+    /**
+     * 当只有一个实现类时，
+     * Spring 会自动把这个实现注入到 FileStorageInterface 的依赖中；
+     * 如果以后有多种实现（比如换存储），再用 @Qualifier 指定就可以。
+     * 这样接口层依赖不绑死具体存储实现，更方便替换和测试。
+     */
     private final FileStorageInterface fileStorageService;
 
 
@@ -118,12 +128,33 @@ public class KnowledgeService {
         return roots;
     }
 
+    /**
+     * @param id: 知识id
+     * @param file: 上传的文件
+     * @param category: 分类文件类别
+     * @param userId: 用户id
+     * @return FileUploadResponseDto 存储的是blobname
+     * @description 上传知识关联的文件到OSS，并更新知识的ossKey字段
+     */
     @Transactional
-    public Knowledge uploadOssFile(Long id, MultipartFile file, String category, Long userId) {
+    public FileUploadResponseDto uploadOssFile(Long id, MultipartFile file, String category, Long userId) {
         Knowledge existing = get(id);
-        String ossKey = fileStorageService.upload(file, category, userId);
-        knowledgeMapper.updateById(id, null, null, null, ossKey);
-        return knowledgeMapper.selectById(existing.getId());
+        FileUploadResponseDto res = fileStorageService.upload(file, category, userId);
+        knowledgeMapper.updateOssKey(id, res.getOssKey());
+        return res;
+    }
+
+    /**
+     * @param id: 知识id
+     * @return FileDownloadDto 文件下载DTO
+     * @description 获取知识关联的文件下载流和头信息
+     */
+    public FileDownloadDto getKnowledgeFile(Long id) {
+        Knowledge existing = get(id);
+        if (existing.getOssKey() == null || existing.getOssKey().isBlank()) {
+            throw new IllegalArgumentException("Knowledge has no file");
+        }
+        return fileStorageService.download(existing.getOssKey());
     }
 
     private void sortTree(List<KnowledgeTreeNode> nodes) {

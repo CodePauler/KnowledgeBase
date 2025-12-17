@@ -1,5 +1,6 @@
 package com.knowledgebase.backend.controller;
 
+import com.knowledgebase.backend.dto.FileUploadResponseDto;
 import com.knowledgebase.backend.dto.KnowledgeCreateRequestDto;
 import com.knowledgebase.backend.dto.KnowledgeTreeNode;
 import com.knowledgebase.backend.dto.KnowledgeUpdateRequestDto;
@@ -8,6 +9,10 @@ import com.knowledgebase.backend.entity.Result;
 import com.knowledgebase.backend.service.FileStorageInterface;
 import com.knowledgebase.backend.service.KnowledgeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -117,17 +122,40 @@ public class KnowledgeController {
      * @description 上传文档文件到azure blob 返回url
      */
     @PostMapping("/{id}/upload")
-    public Result<Knowledge> uploadKnowledgeFile(@RequestAttribute Long userId,
+    public Result<FileUploadResponseDto> uploadKnowledgeFile(@RequestAttribute Long userId,
                                                  @PathVariable Long id,
                                                  @RequestParam(defaultValue = "knowledge") String category,
                                                  @RequestParam("file") MultipartFile file) {
         try {
-            Knowledge knowledge = knowledgeService.uploadOssFile(id, file, category, userId);
-            return Result.success(knowledge, "Knowledge file uploaded");
+            FileUploadResponseDto res = knowledgeService.uploadOssFile(id, file, category, userId);
+            return Result.success(res, "Knowledge file uploaded");
         } catch (IllegalArgumentException e) {
             return Result.error(400, e.getMessage());
         } catch (Exception e) {
             return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * @param id 知识id
+     * @return ResponseEntity<InputStreamResource>
+     * @description 下载知识文件
+     */
+    @GetMapping("/{id}/file")
+    public ResponseEntity<InputStreamResource> downloadKnowledgeFile(@PathVariable Long id) {
+        try {
+            var fileDto = knowledgeService.getKnowledgeFile(id);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType(fileDto.getContentType()));
+            headers.setContentLength(fileDto.getContentLength());
+            headers.set(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileDto.getFilename() + "\"");
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(new InputStreamResource(fileDto.getStream()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 }

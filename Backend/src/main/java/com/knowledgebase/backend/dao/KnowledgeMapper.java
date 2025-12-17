@@ -17,6 +17,8 @@ public interface KnowledgeMapper {
                    @Param("parentId") Long parentId,
                    @Param("ossKey") String ossKey);
 
+    int updateOssKey(@Param("id") Long id, @Param("ossKey") String ossKey);
+
     int deleteById(@Param("id") Long id);
 
     Knowledge selectById(@Param("id") Long id);
