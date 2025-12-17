@@ -33,7 +33,7 @@ public class KnowledgeController {
      *     private KnowledgeType type;   // DOC / MANUAL
      *     private String content;       // MANUAL: markdown；DOC: 解析纯文本(可后续补)
      *     private Long parentId;        // 可空：顶层
-     *     private String ossKey;        // DOC 用（可空：先创建后上传也行）
+     *     private String blobKey;       // DOC 用（可空：先创建后上传也行）
      * @return Result<Knowledge>
      * @description 用户上传知识 手动+文档
      */
@@ -58,7 +58,7 @@ public class KnowledgeController {
      *     private String title;   // 知识名
      *     private String content; // 知识内容
      *     private Long parentId;  // 父知识id
-     *     private String ossKey;  // osskey
+     *     private String blobKey;  // osskey
      * @return Result<Knowledge>
      * @description 用户修改某条知识
      */

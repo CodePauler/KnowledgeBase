@@ -17,5 +17,5 @@ public class KnowledgeCreateRequestDto {
     private KnowledgeType type;   // DOC / MANUAL
     private String content;       // MANUAL: markdown；DOC: 解析纯文本(可后续补)
     private Long parentId;        // 可空：顶层
-    private String ossKey;        // DOC 用（可空：先创建后上传也行）
+    private String blobKey;       // DOC 用（可空：先创建后上传也行）
 }

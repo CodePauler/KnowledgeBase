@@ -22,7 +22,7 @@ public class Knowledge {
     private KnowledgeType type;
     private String content;             // 知识内容（手工录入类知识）
     private Long parentId;              // 父知识id
-    private String ossKey;              // OSS文件路径
+    private String blobKey;             // OSS文件路径
     private LocalDateTime createdAt;    // 创建时间
     private LocalDateTime updatedAt;    // 更新时间
 }

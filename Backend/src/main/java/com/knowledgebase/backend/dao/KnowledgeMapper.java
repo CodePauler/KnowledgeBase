@@ -15,9 +15,9 @@ public interface KnowledgeMapper {
                    @Param("title") String title,
                    @Param("content") String content,
                    @Param("parentId") Long parentId,
-                   @Param("ossKey") String ossKey);
+                   @Param("blobKey") String blobKey);
 
-    int updateOssKey(@Param("id") Long id, @Param("ossKey") String ossKey);
+    int updateBlobKey(@Param("id") Long id, @Param("blobKey") String blobKey);
 
     int deleteById(@Param("id") Long id);
 

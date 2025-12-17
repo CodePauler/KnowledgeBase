@@ -26,7 +26,7 @@ public class AzureBlobStorageService implements FileStorageInterface {
     }
 
     @Override
-    public FileDownloadDto download(String ossKey) {
-        return azureBlobClient.download(ossKey);
+    public FileDownloadDto download(String blobKey) {
+        return azureBlobClient.download(blobKey);
     }
 }

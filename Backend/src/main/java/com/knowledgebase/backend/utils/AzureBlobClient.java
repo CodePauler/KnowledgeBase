@@ -70,7 +70,7 @@ public class AzureBlobClient {
                     .setContentType(resolveContentType(file.getContentType(), extension));
             blobClient.setHttpHeaders(headers);
             return FileUploadResponseDto.builder()
-                    .ossKey(blobName)
+                    .blobKey(blobName)
                     .build();
         } catch (IOException e) {
             log.error("Failed to read upload file", e);

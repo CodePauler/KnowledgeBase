@@ -10,5 +10,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class FileUploadResponseDto {
-    private String ossKey;   // blobName/key stored in DB
+    private String blobKey;   // blobName/key stored in DB
 }

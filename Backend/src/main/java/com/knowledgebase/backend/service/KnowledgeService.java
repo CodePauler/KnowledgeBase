@@ -49,7 +49,7 @@ public class KnowledgeService {
                         .type(req.getType())
                         .content(req.getContent())
                         .parentId(req.getParentId())
-                        .ossKey(req.getOssKey())
+                        .blobKey(req.getBlobKey())
                         .build();
 
         knowledgeMapper.insert(k);
@@ -76,7 +76,7 @@ public class KnowledgeService {
             if (!ok) throw new IllegalArgumentException("parentId不属于该space");
         }
 
-        knowledgeMapper.updateById(id, req.getTitle(), req.getContent(), req.getParentId(), req.getOssKey());
+        knowledgeMapper.updateById(id, req.getTitle(), req.getContent(), req.getParentId(), req.getBlobKey());
         return knowledgeMapper.selectById(id);
     }
 
@@ -134,13 +134,13 @@ public class KnowledgeService {
      * @param category: 分类文件类别
      * @param userId: 用户id
      * @return FileUploadResponseDto 存储的是blobname
-     * @description 上传知识关联的文件到OSS，并更新知识的ossKey字段
+     * @description 上传知识关联的文件到OSS，并更新知识的blobKey字段
      */
     @Transactional
     public FileUploadResponseDto uploadOssFile(Long id, MultipartFile file, String category, Long userId) {
         Knowledge existing = get(id);
         FileUploadResponseDto res = fileStorageService.upload(file, category, userId);
-        knowledgeMapper.updateOssKey(id, res.getOssKey());
+        knowledgeMapper.updateBlobKey(id, res.getBlobKey());
         return res;
     }
 
@@ -151,10 +151,10 @@ public class KnowledgeService {
      */
     public FileDownloadDto getKnowledgeFile(Long id) {
         Knowledge existing = get(id);
-        if (existing.getOssKey() == null || existing.getOssKey().isBlank()) {
+        if (existing.getBlobKey() == null || existing.getBlobKey().isBlank()) {
             throw new IllegalArgumentException("Knowledge has no file");
         }
-        return fileStorageService.download(existing.getOssKey());
+        return fileStorageService.download(existing.getBlobKey());
     }
 
     private void sortTree(List<KnowledgeTreeNode> nodes) {

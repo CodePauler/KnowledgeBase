@@ -11,14 +11,14 @@
         <result property="type" column="type"/>
         <result property="content" column="content"/>
         <result property="parentId" column="parent_id"/>
-        <result property="ossKey" column="oss_key"/>
+        <result property="blobKey" column="blob_key"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO knowledge (space_id, title, type, content, parent_id, oss_key)
-        VALUES (#{spaceId}, #{title}, #{type}, #{content}, #{parentId}, #{ossKey})
+        INSERT INTO knowledge (space_id, title, type, content, parent_id, blob_key)
+        VALUES (#{spaceId}, #{title}, #{type}, #{content}, #{parentId}, #{blobKey})
     </insert>
 
     <update id="updateById">
@@ -28,15 +28,15 @@
             <if test="content != null">content = #{content},</if>
             <!-- parentId 允许置空，所以用一个额外参数判断是否传了；简化起见：前端不传就保持不变，传 null 则无法区分 -->
             <if test="parentId != null">parent_id = #{parentId},</if>
-            <if test="ossKey != null">oss_key = #{ossKey},</if>
+            <if test="blobKey != null">blob_key = #{blobKey},</if>
             updated_at = CURRENT_TIMESTAMP
         </set>
         WHERE id = #{id}
     </update>
 
-    <update id="updateOssKey">
+    <update id="updateBlobKey">
         UPDATE knowledge
-        SET oss_key = #{ossKey},
+        SET blob_key = #{blobKey},
             updated_at = CURRENT_TIMESTAMP
         WHERE id = #{id}
     </update>
