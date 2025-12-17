@@ -23,11 +23,9 @@ jwt:
   secret: kfc-crazy-thursday-vme-fifty-dhu-dhu
   expiration: 86400000  # 24 hours in ms
 
-# 阿里云OSS
-aliyun:
-  oss:
-    endpoint: http://oss-your-endpoint
-    bucket-name: your-bucket-name
-    access-key-id: your-access-key-id
-    access-key-secret: your-access-key-secret
-    folder: knowledge
+# Azure Blob Storage
+azure:
+  blob:
+    container: knowledge-files
+    base-folder: knowledge
+    connection-string: ${AZURE_STORAGE_CONNECTION_STRING:}  #TODO: 在环境变量中设置AZURE_STORAGE_CONNECTION_STRING

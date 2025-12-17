@@ -121,11 +121,11 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Aliyun OSS -->
+        <!-- Azure Blob Storage -->
         <dependency>
-            <groupId>com.aliyun.oss</groupId>
-            <artifactId>aliyun-sdk-oss</artifactId>
-            <version>3.17.1</version>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-storage-blob</artifactId>
+            <version>12.27.1</version>
         </dependency>
 
     </dependencies>
