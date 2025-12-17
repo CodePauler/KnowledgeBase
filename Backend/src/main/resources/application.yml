@@ -1,24 +1,33 @@
 spring:
   application:
     name: Backend
-  # 数据库相关
+  # 数据库
   datasource:
     url: jdbc:mysql://localhost:3306/knowledgebase?useSSL=false&serverTimezone=UTC
-    username: root    # 启动前请修改为你的数据库用户名和密码
-    password: 123456
+    username: root    # TODO: 修改为你的数据库用户名
+    password: 123456  # TODO: 修改为你的MYSQL密码
   web:
     error:
       whitelabel:
-        enabled: false # 使用默认的错误页面
+        enabled: false  # 使用默认错误页面
 
 # mybatis配置
 mybatis:
-  mapper-locations: classpath:mapper/*.xml  # mapper映射文件位于resources/mapper/*.xml
-  type-aliases-package: com.knowledgebase.backend.entity  # 映射的实体类位于 entity/*.java
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.knowledgebase.backend.entity
   configuration:
-    map-underscore-to-camel-case: true # 驼峰映射
+    map-underscore-to-camel-case: true
 
-# JWT 配置
+# JWT TOKEN
 jwt:
   secret: kfc-crazy-thursday-vme-fifty-dhu-dhu
-  expiration: 86400000  # 24小时毫秒数
+  expiration: 86400000  # 24 hours in ms
+
+# 阿里云OSS
+aliyun:
+  oss:
+    endpoint: http://oss-your-endpoint
+    bucket-name: your-bucket-name
+    access-key-id: your-access-key-id
+    access-key-secret: your-access-key-secret
+    folder: knowledge
