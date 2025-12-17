@@ -5,9 +5,11 @@ import com.knowledgebase.backend.dto.KnowledgeTreeNode;
 import com.knowledgebase.backend.dto.KnowledgeUpdateRequestDto;
 import com.knowledgebase.backend.entity.Knowledge;
 import com.knowledgebase.backend.entity.Result;
+import com.knowledgebase.backend.service.FileStorageInterface;
 import com.knowledgebase.backend.service.KnowledgeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -17,6 +19,7 @@ import java.util.List;
 public class KnowledgeController {
 
     private final KnowledgeService knowledgeService;
+    private final FileStorageInterface fileStorageService;
 
     /**
      * @param req:
@@ -103,5 +106,28 @@ public class KnowledgeController {
     @GetMapping("/space/{spaceId}/tree")
     public Result<List<KnowledgeTreeNode>> tree(@PathVariable Long spaceId) {
         return Result.success(knowledgeService.tree(spaceId));
+    }
+
+    /**
+     * @param userId: 用户id
+     * @param id: 知识id
+     * @param category: 分类文件类别
+     * @param file: 要上传的文档文件
+     * @return Result<Knowledge>
+     * @description 上传文档文件到azure blob 返回url
+     */
+    @PostMapping("/{id}/upload")
+    public Result<Knowledge> uploadKnowledgeFile(@RequestAttribute Long userId,
+                                                 @PathVariable Long id,
+                                                 @RequestParam(defaultValue = "knowledge") String category,
+                                                 @RequestParam("file") MultipartFile file) {
+        try {
+            Knowledge knowledge = knowledgeService.uploadOssFile(id, file, category, userId);
+            return Result.success(knowledge, "Knowledge file uploaded");
+        } catch (IllegalArgumentException e) {
+            return Result.error(400, e.getMessage());
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
     }
 }

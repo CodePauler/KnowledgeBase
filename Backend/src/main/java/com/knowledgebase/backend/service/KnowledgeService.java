@@ -5,9 +5,11 @@ import com.knowledgebase.backend.dto.KnowledgeCreateRequestDto;
 import com.knowledgebase.backend.dto.KnowledgeTreeNode;
 import com.knowledgebase.backend.dto.KnowledgeUpdateRequestDto;
 import com.knowledgebase.backend.entity.Knowledge;
+import com.knowledgebase.backend.service.FileStorageInterface;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
@@ -16,6 +18,7 @@ import java.util.*;
 public class KnowledgeService {
 
     private final KnowledgeMapper knowledgeMapper;
+    private final FileStorageInterface fileStorageService;
 
 
     @Transactional
@@ -113,6 +116,14 @@ public class KnowledgeService {
         // 让目录稳定一点：按 id 排个序（也可按 title）
         sortTree(roots);
         return roots;
+    }
+
+    @Transactional
+    public Knowledge uploadOssFile(Long id, MultipartFile file, String category, Long userId) {
+        Knowledge existing = get(id);
+        String ossKey = fileStorageService.upload(file, category, userId);
+        knowledgeMapper.updateById(id, null, null, null, ossKey);
+        return knowledgeMapper.selectById(existing.getId());
     }
 
     private void sortTree(List<KnowledgeTreeNode> nodes) {
