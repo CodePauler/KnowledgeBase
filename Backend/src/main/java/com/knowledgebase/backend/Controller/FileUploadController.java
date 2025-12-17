@@ -1,7 +1,7 @@
 package com.knowledgebase.backend.controller;
 
 import com.knowledgebase.backend.entity.Result;
-import com.knowledgebase.backend.utils.AzureBlobClient;
+import com.knowledgebase.backend.service.FileStorageInterface;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 文件上传控制器：所有上传统一走这里，便于拓展
+ * @TODO: 后续可以增加文件删除接口以及鉴权
  */
 @RestController
 @RequestMapping("/api/files")
@@ -20,7 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 public class FileUploadController {
 
-    private final AzureBlobClient azureBlobClient;
+    private final FileStorageInterface fileStorageService;
 
     /**
      * @param userId: 用户id（从JWT解析）
@@ -34,7 +35,7 @@ public class FileUploadController {
                                  @RequestParam(defaultValue = "common") String category,
                                  @RequestParam("file") MultipartFile file) {
         try {
-            String url = azureBlobClient.upload(file, category, userId);
+            String url = fileStorageService.upload(file, category, userId);
             return Result.success(url, "File uploaded");
         } catch (IllegalArgumentException e) {
             return Result.error(400, e.getMessage());
