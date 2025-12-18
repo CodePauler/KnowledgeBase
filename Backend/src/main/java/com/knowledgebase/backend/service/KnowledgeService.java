@@ -2,14 +2,15 @@ package com.knowledgebase.backend.service;
 
 import com.knowledgebase.backend.dao.KnowledgeMapper;
 import com.knowledgebase.backend.dto.FileUploadResponseDto;
-import com.knowledgebase.backend.dto.FileUploadResponseDto;
 import com.knowledgebase.backend.dto.KnowledgeCreateRequestDto;
 import com.knowledgebase.backend.dto.KnowledgeTreeNode;
 import com.knowledgebase.backend.dto.KnowledgeUpdateRequestDto;
 import com.knowledgebase.backend.entity.Knowledge;
-import com.knowledgebase.backend.service.FileStorageInterface;
+import com.knowledgebase.backend.entity.KnowledgeType;
 import com.knowledgebase.backend.service.FileDownloadDto;
+import com.knowledgebase.backend.service.FileStorageInterface;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,10 +19,11 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class KnowledgeService {
 
     private final KnowledgeMapper knowledgeMapper;
-    
+
     /**
      * 当只有一个实现类时，
      * Spring 会自动把这个实现注入到 FileStorageInterface 的依赖中；
@@ -29,30 +31,40 @@ public class KnowledgeService {
      * 这样接口层依赖不绑死具体存储实现，更方便替换和测试。
      */
     private final FileStorageInterface fileStorageService;
-
+    private final DocumentParseService documentParseService;
 
     @Transactional
     public Knowledge create(KnowledgeCreateRequestDto req) {
         if (req.getSpaceId() == null) throw new IllegalArgumentException("spaceId不能为空");
         if (req.getTitle() == null || req.getTitle().isBlank()) throw new IllegalArgumentException("title不能为空");
         if (req.getType() == null) throw new IllegalArgumentException("type不能为空");
+        if (req.getType() == KnowledgeType.DOC && (req.getBlobKey() == null || req.getBlobKey().isBlank())) {
+            throw new IllegalArgumentException("blobKey不能为空");
+        }
 
-        // parentId 校验：必须属于同一个 space（避免跨 space 串树）
+        // parentId 校验：必须属于同一个space（避免跨 space 串树）
         if (req.getParentId() != null) {
             boolean ok = knowledgeMapper.existsInSpace(req.getParentId(), req.getSpaceId());
             if (!ok) throw new IllegalArgumentException("parentId不属于该space");
         }
 
         Knowledge k = Knowledge.builder()
-                        .spaceId(req.getSpaceId())
-                        .title(req.getTitle())
-                        .type(req.getType())
-                        .content(req.getContent())
-                        .parentId(req.getParentId())
-                        .blobKey(req.getBlobKey())
-                        .build();
+                .spaceId(req.getSpaceId())
+                .title(req.getTitle())
+                .type(req.getType())
+                .content(req.getContent())
+                .parentId(req.getParentId())
+                .blobKey(req.getBlobKey())
+                .parseJob(req.getType() == KnowledgeType.DOC && req.getBlobKey() != null ? "PENDING" : null)
+                .build();
 
         knowledgeMapper.insert(k);
+
+        // 异步解析文档类知识
+        if (k.getType() == KnowledgeType.DOC && k.getBlobKey() != null) {
+            documentParseService.parseAndEmbed(k.getId(), k.getBlobKey());
+        }
+
         return knowledgeMapper.selectById(k.getId());
     }
 
@@ -75,8 +87,15 @@ public class KnowledgeService {
             boolean ok = knowledgeMapper.existsInSpace(req.getParentId(), existing.getSpaceId());
             if (!ok) throw new IllegalArgumentException("parentId不属于该space");
         }
-
+ 
         knowledgeMapper.updateById(id, req.getTitle(), req.getContent(), req.getParentId(), req.getBlobKey());
+
+        // 如果更新为文档类并携带新的 blobKey，则重新触发解析
+        if (existing.getType() == KnowledgeType.DOC && req.getBlobKey() != null && !req.getBlobKey().isBlank()) {
+            knowledgeMapper.updateParseJob(id, "PENDING");
+            documentParseService.parseAndEmbed(id, req.getBlobKey());
+        }
+
         return knowledgeMapper.selectById(id);
     }
 
@@ -102,12 +121,12 @@ public class KnowledgeService {
         Map<Long, KnowledgeTreeNode> map = new HashMap<>(all.size() * 2);
         for (Knowledge k : all) {
             KnowledgeTreeNode n = KnowledgeTreeNode.builder()
-                            .id(k.getId())
-                            .spaceId(k.getSpaceId())
-                            .title(k.getTitle())
-                            .type(k.getType() == null ? null : k.getType().name())
-                            .parentId(k.getParentId())
-                            .build();
+                    .id(k.getId())
+                    .spaceId(k.getSpaceId())
+                    .title(k.getTitle())
+                    .type(k.getType() == null ? null : k.getType().name())
+                    .parentId(k.getParentId())
+                    .build();
             map.put(n.getId(), n);
         }
 
@@ -141,6 +160,10 @@ public class KnowledgeService {
         Knowledge existing = get(id);
         FileUploadResponseDto res = fileStorageService.upload(file, category, userId);
         knowledgeMapper.updateBlobKey(id, res.getBlobKey());
+        if (existing.getType() == KnowledgeType.DOC) {
+            knowledgeMapper.updateParseJob(id, "PENDING");
+            documentParseService.parseAndEmbed(id, res.getBlobKey());
+        }
         return res;
     }
 

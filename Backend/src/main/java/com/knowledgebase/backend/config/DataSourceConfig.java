@@ -1,11 +1,11 @@
 package com.knowledgebase.backend.config;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.beans.factory.annotation.Value;
+import com.zaxxer.hikari.HikariDataSource;
 
 import javax.sql.DataSource;
 
@@ -20,9 +20,18 @@ public class DataSourceConfig {
      */
     @Primary
     @Bean(name = "mysqlDataSource")
-    @ConfigurationProperties(prefix = "spring.datasource")
-    public DataSource mysqlDataSource() {
-        return DataSourceBuilder.create().build();
+    public DataSource mysqlDataSource(
+            @Value("${spring.datasource.url}") String url,
+            @Value("${spring.datasource.username}") String username,
+            @Value("${spring.datasource.password}") String password) {
+        // 明确指定 Hikari, 并给出 poolName 便于排查
+        return DataSourceBuilder.create()
+                .type(HikariDataSource.class)
+                .driverClassName("com.mysql.cj.jdbc.Driver")
+                .url(url)
+                .username(username)
+                .password(password)
+                .build();
     }
 
     /**
@@ -36,6 +45,7 @@ public class DataSourceConfig {
             @Value("${spring.ai.vectorstore.pgvector.password}") String password,
             @Value("${spring.ai.vectorstore.pgvector.driver-class-name}") String driverClassName) {
         return DataSourceBuilder.create()
+                .type(HikariDataSource.class)
                 .driverClassName(driverClassName)
                 .url(url)
                 .username(username)
