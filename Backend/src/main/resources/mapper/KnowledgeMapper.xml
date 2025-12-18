@@ -12,13 +12,14 @@
         <result property="content" column="content"/>
         <result property="parentId" column="parent_id"/>
         <result property="blobKey" column="blob_key"/>
+        <result property="parseJob" column="parse_job"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO knowledge (space_id, title, type, content, parent_id, blob_key)
-        VALUES (#{spaceId}, #{title}, #{type}, #{content}, #{parentId}, #{blobKey})
+        INSERT INTO knowledge (space_id, title, type, content, parent_id, blob_key, parse_job)
+        VALUES (#{spaceId}, #{title}, #{type}, #{content}, #{parentId}, #{blobKey}, #{parseJob})
     </insert>
 
     <update id="updateById">
@@ -37,6 +38,13 @@
     <update id="updateBlobKey">
         UPDATE knowledge
         SET blob_key = #{blobKey},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateParseJob">
+        UPDATE knowledge
+        SET parse_job = #{parseJob},
             updated_at = CURRENT_TIMESTAMP
         WHERE id = #{id}
     </update>
