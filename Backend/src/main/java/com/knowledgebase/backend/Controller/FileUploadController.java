@@ -28,8 +28,8 @@ public class FileUploadController {
      * @param userId: 用户id（从JWT解析）
      * @param category: 分类文件夹，如 knowledge/avatar ，这里就传avatar
      * @param file: 上传的文件
-     * @return Result<String> blob url
-     * @description 支持 pdf/doc/docx/txt/png/jpg/jpeg 上传，返回 Azure Blob 的访问 URL
+     * @return Result<FileUploadResponseDto> blobKey
+     * @description 支持 pdf/doc/docx/txt/png/jpg/jpeg 上传，返回 Azure Blob 的blobKey
      */
     @PostMapping("/upload")
     public Result<FileUploadResponseDto> upload(@RequestAttribute Long userId,

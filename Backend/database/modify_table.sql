@@ -4,3 +4,5 @@ ALTER TABLE knowledge
   MODIFY content LONGTEXT COMMENT '知识内容：MANUAL=Markdown；DOC=解析出的纯文本';
   
 ALTER TABLE knowledge RENAME COLUMN oss_key TO blob_key;
+
+ALTER TABLE knowledge ADD COLUMN parse_job VARCHAR(20) DEFAULT NULL COMMENT '解析状态：PENDING/RUNNING/DONE/FAILED' AFTER blob_key;

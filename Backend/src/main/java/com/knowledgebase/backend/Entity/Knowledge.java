@@ -23,6 +23,7 @@ public class Knowledge {
     private String content;             // 知识内容（手工录入类知识）
     private Long parentId;              // 父知识id
     private String blobKey;             // OSS文件路径
+    private String parseJob;            // 解析状态：PENDING/RUNNING/DONE/FAILED
     private LocalDateTime createdAt;    // 创建时间
     private LocalDateTime updatedAt;    // 更新时间
 }

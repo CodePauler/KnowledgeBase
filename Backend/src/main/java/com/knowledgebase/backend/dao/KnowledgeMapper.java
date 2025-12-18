@@ -19,6 +19,8 @@ public interface KnowledgeMapper {
 
     int updateBlobKey(@Param("id") Long id, @Param("blobKey") String blobKey);
 
+    int updateParseJob(@Param("id") Long id, @Param("parseJob") String parseJob);
+
     int deleteById(@Param("id") Long id);
 
     Knowledge selectById(@Param("id") Long id);
