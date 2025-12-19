@@ -10,7 +10,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import javax.sql.DataSource;
 
 /**
- * 多数据源配置：MySQL（主） + PostgreSQL（向量存储）
+ * 多数据源配置：MySQL+ PostgreSQL
  */
 @Configuration
 public class DataSourceConfig {
