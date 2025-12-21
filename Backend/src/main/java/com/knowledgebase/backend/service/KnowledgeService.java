@@ -35,9 +35,12 @@ public class KnowledgeService {
 
     @Transactional
     public Knowledge create(KnowledgeCreateRequestDto req) {
-        if (req.getSpaceId() == null) throw new IllegalArgumentException("spaceId不能为空");
-        if (req.getTitle() == null || req.getTitle().isBlank()) throw new IllegalArgumentException("title不能为空");
-        if (req.getType() == null) throw new IllegalArgumentException("type不能为空");
+        if (req.getSpaceId() == null)
+            throw new IllegalArgumentException("spaceId不能为空");
+        if (req.getTitle() == null || req.getTitle().isBlank())
+            throw new IllegalArgumentException("title不能为空");
+        if (req.getType() == null)
+            throw new IllegalArgumentException("type不能为空");
         if (req.getType() == KnowledgeType.DOC && (req.getBlobKey() == null || req.getBlobKey().isBlank())) {
             throw new IllegalArgumentException("blobKey不能为空");
         }
@@ -45,7 +48,8 @@ public class KnowledgeService {
         // parentId 校验：必须属于同一个space（避免跨 space 串树）
         if (req.getParentId() != null) {
             boolean ok = knowledgeMapper.existsInSpace(req.getParentId(), req.getSpaceId());
-            if (!ok) throw new IllegalArgumentException("parentId不属于该space");
+            if (!ok)
+                throw new IllegalArgumentException("parentId不属于该space");
         }
 
         Knowledge k = Knowledge.builder()
@@ -65,12 +69,18 @@ public class KnowledgeService {
             documentParseService.parseAndEmbed(k.getId(), k.getBlobKey());
         }
 
+        // 手工录入类（Markdown/Manual）也参与向量检索
+        if (k.getType() == KnowledgeType.MANUAL && k.getContent() != null && !k.getContent().isBlank()) {
+            documentParseService.embedMarkdown(k.getId(), k.getContent());
+        }
+
         return knowledgeMapper.selectById(k.getId());
     }
 
     public Knowledge get(Long id) {
         Knowledge k = knowledgeMapper.selectById(id);
-        if (k == null) throw new NoSuchElementException("知识不存在");
+        if (k == null)
+            throw new NoSuchElementException("知识不存在");
         return k;
     }
 
@@ -85,15 +95,24 @@ public class KnowledgeService {
                 throw new IllegalArgumentException("parentId不能是自己");
             }
             boolean ok = knowledgeMapper.existsInSpace(req.getParentId(), existing.getSpaceId());
-            if (!ok) throw new IllegalArgumentException("parentId不属于该space");
+            if (!ok)
+                throw new IllegalArgumentException("parentId不属于该space");
         }
- 
+
         knowledgeMapper.updateById(id, req.getTitle(), req.getContent(), req.getParentId(), req.getBlobKey());
 
         // 如果更新为文档类并携带新的 blobKey，则重新触发解析
         if (existing.getType() == KnowledgeType.DOC && req.getBlobKey() != null && !req.getBlobKey().isBlank()) {
+            // 先删除旧向量，再重新解析
+            documentParseService.deleteVectorsByKnowledgeId(id);
             knowledgeMapper.updateParseJob(id, "PENDING");
             documentParseService.parseAndEmbed(id, req.getBlobKey());
+        }
+
+        // 如果是手工录入类，内容更新后重新向量化：先删除旧向量，再添加新向量
+        if (existing.getType() == KnowledgeType.MANUAL && req.getContent() != null && !req.getContent().isBlank()) {
+            documentParseService.deleteVectorsByKnowledgeId(id);
+            documentParseService.embedMarkdown(id, req.getContent());
         }
 
         return knowledgeMapper.selectById(id);
@@ -137,8 +156,10 @@ public class KnowledgeService {
             } else {
                 KnowledgeTreeNode p = map.get(n.getParentId());
                 // 如果父节点缺失（脏数据），就当根
-                if (p == null) roots.add(n);
-                else p.getChildren().add(n);
+                if (p == null)
+                    roots.add(n);
+                else
+                    p.getChildren().add(n);
             }
         }
 
@@ -148,10 +169,10 @@ public class KnowledgeService {
     }
 
     /**
-     * @param id: 知识id
-     * @param file: 上传的文件
+     * @param id:       知识id
+     * @param file:     上传的文件
      * @param category: 分类文件类别
-     * @param userId: 用户id
+     * @param userId:   用户id
      * @return FileUploadResponseDto 存储的是blobname
      * @description 上传知识关联的文件到OSS，并更新知识的blobKey字段
      */

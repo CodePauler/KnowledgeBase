@@ -54,3 +54,8 @@ azure:
     container: knowledge-files
     base-folder: knowledge
     connection-string: ${AZURE_STORAGE_CONNECTION_STRING:}
+
+# Knowledge Vector Configuration
+knowledge:
+  vector:
+    min-length: 100  # 小于该长度的文本不分片，按单块入库
