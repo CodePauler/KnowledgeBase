@@ -48,7 +48,7 @@ public class DocumentParseService {
                     knowledgeId, blobKey, rawDocs.size());
             for (Document d : rawDocs) {
                 // 使用纯内容，避免携带 Tika 的格式化头信息（如 source 等）
-                String text = d.getText();
+                String text = stripInvalidSource(d.getText());
                 if (text.isBlank()) {
                     continue; // 跳过空文档
                 }
@@ -66,9 +66,12 @@ public class DocumentParseService {
             if (!cleanDocs.isEmpty()) {
                 List<Document> chunks = splitter.split(cleanDocs);
                 vectorStore.add(chunks);
+                log.info("Parse and embed succeeded for knowledgeId={}, blobKey={}", knowledgeId, blobKey);
+                knowledgeMapper.updateParseJob(knowledgeId, "DONE");
+            } else {
+                log.warn("Parse result is empty for knowledgeId={}, blobKey={}", knowledgeId, blobKey);
+                knowledgeMapper.updateParseJob(knowledgeId, "FAILED");
             }
-            log.info("Parse and embed succeeded for knowledgeId={}, blobKey={}", knowledgeId, blobKey);
-            knowledgeMapper.updateParseJob(knowledgeId, "DONE");
         } catch (Exception e) {
             log.error("Parse and embed failed for knowledgeId={}, blobKey={}", knowledgeId, blobKey, e);
             knowledgeMapper.updateParseJob(knowledgeId, "FAILED");
