@@ -3,6 +3,7 @@ package com.knowledgebase.backend.service;
 import com.knowledgebase.backend.dao.KnowledgeMapper;
 import com.knowledgebase.backend.dto.FileUploadResponseDto;
 import com.knowledgebase.backend.dto.KnowledgeCreateRequestDto;
+import com.knowledgebase.backend.dto.KnowledgeSearchResultDto;
 import com.knowledgebase.backend.dto.KnowledgeTreeNode;
 import com.knowledgebase.backend.dto.KnowledgeUpdateRequestDto;
 import com.knowledgebase.backend.entity.Knowledge;
@@ -11,11 +12,17 @@ import com.knowledgebase.backend.service.FileDownloadDto;
 import com.knowledgebase.backend.service.FileStorageInterface;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.Filter;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +30,7 @@ import java.util.*;
 public class KnowledgeService {
 
     private final KnowledgeMapper knowledgeMapper;
+    private final VectorStore vectorStore;
 
     /**
      * 当只有一个实现类时，
@@ -199,6 +207,109 @@ public class KnowledgeService {
             throw new IllegalArgumentException("Knowledge has no file");
         }
         return fileStorageService.download(existing.getBlobKey());
+    }
+
+    /**
+     * 基于向量相似度检索知识
+     * 
+     * @param question            用户问题
+     * @param spaceId             限定空间 ID（可选）
+     * @param knowledgeIds        限定知识 ID 列表（可选）
+     * @param topK                返回最相关的 N 个片段
+     * @param similarityThreshold 相似度阈值
+     * @return 检索结果列表，按 knowledgeId 聚合
+     */
+    public List<KnowledgeSearchResultDto> searchBySemantics(
+            String question,
+            Long spaceId,
+            List<Long> knowledgeIds,
+            int topK,
+            double similarityThreshold) {
+
+        try {
+            // 构造过滤条件
+            FilterExpressionBuilder filterBuilder = new FilterExpressionBuilder();
+            Filter.Expression filter = null;
+
+            if (spaceId != null && knowledgeIds != null && !knowledgeIds.isEmpty()) {
+                // 同时限定 spaceId 和 knowledgeIds
+                filter = filterBuilder.and(
+                        filterBuilder.eq("spaceId", spaceId),
+                        filterBuilder.in("knowledgeId", knowledgeIds.toArray())).build();
+            } else if (spaceId != null) {
+                // 只限定 spaceId
+                filter = filterBuilder.eq("spaceId", spaceId).build();
+            } else if (knowledgeIds != null && !knowledgeIds.isEmpty()) {
+                // 只限定 knowledgeIds
+                filter = filterBuilder.in("knowledgeId", knowledgeIds.toArray()).build();
+            }
+
+            // 构造检索请求
+            SearchRequest.Builder requestBuilder = SearchRequest.builder()
+                    .query(question)
+                    .topK(topK)
+                    .similarityThreshold(similarityThreshold);
+
+            if (filter != null) {
+                requestBuilder.filterExpression(filter);
+            }
+
+            // 执行向量检索
+            List<Document> chunks = vectorStore.similaritySearch(requestBuilder.build());
+
+            if (chunks.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            // 按 knowledgeId 聚合结果
+            Map<Long, List<Document>> groupedByKnowledge = chunks.stream()
+                    .collect(Collectors.groupingBy(doc -> {
+                        Object id = doc.getMetadata().get("knowledgeId");
+                        return id instanceof Number ? ((Number) id).longValue() : -1L; // 使用 -1L 作为无效 ID，避免与实际 ID 冲突
+                    }));
+            groupedByKnowledge.remove(-1L); // 移除无效 ID 对应的分组
+
+            // 查询 MySQL 补全知识元信息
+            List<Long> foundKnowledgeIds = new ArrayList<>(groupedByKnowledge.keySet());
+            List<Knowledge> knowledges = knowledgeMapper.selectByIds(foundKnowledgeIds);
+
+            // 构造结果
+            return knowledges.stream()
+                    .map(knowledge -> {
+                        List<Document> relatedChunks = groupedByKnowledge.get(knowledge.getId());
+                        // Spring AI PgVector typically returns 'distance' (cosine distance). Convert to
+                        // similarity.
+                        double avgScore = relatedChunks.stream()
+                                .mapToDouble(doc -> {
+                                    Object distObj = doc.getMetadata().get("distance");
+                                    if (distObj instanceof Number) {
+                                        double distance = ((Number) distObj).doubleValue();
+                                        return Math.max(0.0, 1.0 - distance); // similarity in [0,1]
+                                    }
+                                    Object scoreObj = doc.getMetadata().get("score");
+                                    if (scoreObj instanceof Number) {
+                                        return ((Number) scoreObj).doubleValue();
+                                    }
+                                    return 0.0;
+                                })
+                                .average()
+                                .orElse(0.0);
+
+                        return KnowledgeSearchResultDto.builder()
+                                .knowledgeId(knowledge.getId())
+                                .title(knowledge.getTitle())
+                                .type(knowledge.getType() != null ? knowledge.getType().name() : null)
+                                .chunks(relatedChunks)
+                                .avgScore(avgScore)
+                                .build();
+                    })
+                    .sorted(Comparator.comparingDouble(KnowledgeSearchResultDto::getAvgScore).reversed())
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            log.error("Semantic search failed for question: {}", question, e);
+            return Collections.emptyList();
+        }
     }
 
     private void sortTree(List<KnowledgeTreeNode> nodes) {

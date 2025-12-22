@@ -28,7 +28,7 @@ public class DocumentParseService {
     private final KnowledgeMapper knowledgeMapper;
     private final VectorStore vectorStore;
     private final TokenTextSplitter splitter = new TokenTextSplitter();
-    
+
     @Value("${knowledge.vector.min-length:100}")
     private int minVectorLength;
 
@@ -36,32 +36,36 @@ public class DocumentParseService {
     public void parseAndEmbed(Long knowledgeId, String blobKey) {
         knowledgeMapper.updateParseJob(knowledgeId, "RUNNING");
         try (InputStream inputStream = fileStorageService.download(blobKey).getStream()) {
+            // 获取知识所属的 spaceId
+            Long spaceId = knowledgeMapper.selectById(knowledgeId).getSpaceId();
+
             TikaDocumentReader reader = new TikaDocumentReader(new InputStreamResource(inputStream));
             List<Document> rawDocs = reader.read();
 
             List<Document> cleanDocs = new java.util.ArrayList<>();
-            StringBuilder merged = new StringBuilder();
 
+            log.info("Parsing document for knowledgeId={}, blobKey={}, rawDocsSize={}",
+                    knowledgeId, blobKey, rawDocs.size());
             for (Document d : rawDocs) {
-                String text = stripInvalidSource(d.getFormattedContent());
+                // 使用纯内容，避免携带 Tika 的格式化头信息（如 source 等）
+                String text = d.getText();
                 if (text.isBlank()) {
                     continue; // 跳过空文档
                 }
-                merged.append(text).append("\n\n");
 
                 Map<String, Object> metadata = new HashMap<>();
                 metadata.put("knowledgeId", knowledgeId);
+                metadata.put("spaceId", spaceId); // 添加 spaceId 以支持向量库层面过滤
                 metadata.put("blobKey", blobKey);
                 metadata.put("filename", extractFilename(blobKey));
                 cleanDocs.add(new Document(text, metadata));
+                log.info("Extracted clean document chunk, length={}, knowledgeId={}, blobKey={}",
+                        text.length(), knowledgeId, blobKey);
             }
 
             if (!cleanDocs.isEmpty()) {
                 List<Document> chunks = splitter.split(cleanDocs);
                 vectorStore.add(chunks);
-            }
-            if (merged.length() > 0) {
-                knowledgeMapper.updateById(knowledgeId, null, merged.toString().trim(), null, null);
             }
             log.info("Parse and embed succeeded for knowledgeId={}, blobKey={}", knowledgeId, blobKey);
             knowledgeMapper.updateParseJob(knowledgeId, "DONE");
@@ -98,9 +102,13 @@ public class DocumentParseService {
 
             String text = content.trim();
 
-            // 构造元信息，便于后续按 knowledgeId 过滤
+            // 获取知识所属的 spaceId
+            Long spaceId = knowledgeMapper.selectById(knowledgeId).getSpaceId();
+
+            // 构造元信息，便于后续按 knowledgeId 和 spaceId 过滤
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("knowledgeId", knowledgeId);
+            metadata.put("spaceId", spaceId); // 添加 spaceId
             metadata.put("source", "markdown");
 
             List<Document> docs;
@@ -126,8 +134,8 @@ public class DocumentParseService {
     public void deleteVectorsByKnowledgeId(Long knowledgeId) {
         try {
             Filter.Expression filter = new FilterExpressionBuilder()
-                .eq("knowledgeId", knowledgeId)
-                .build();
+                    .eq("knowledgeId", knowledgeId)
+                    .build();
             vectorStore.delete(filter);
             log.info("Deleted vectors for knowledgeId={}", knowledgeId);
         } catch (Exception e) {

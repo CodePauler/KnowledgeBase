@@ -12,10 +12,10 @@ public interface KnowledgeMapper {
     int insert(Knowledge knowledge);
 
     int updateById(@Param("id") Long id,
-                   @Param("title") String title,
-                   @Param("content") String content,
-                   @Param("parentId") Long parentId,
-                   @Param("blobKey") String blobKey);
+            @Param("title") String title,
+            @Param("content") String content,
+            @Param("parentId") Long parentId,
+            @Param("blobKey") String blobKey);
 
     int updateBlobKey(@Param("id") Long id, @Param("blobKey") String blobKey);
 
@@ -25,10 +25,12 @@ public interface KnowledgeMapper {
 
     Knowledge selectById(@Param("id") Long id);
 
+    List<Knowledge> selectByIds(@Param("ids") List<Long> ids);
+
     List<Knowledge> listBySpace(@Param("spaceId") Long spaceId);
 
     List<Knowledge> listBySpaceAndParent(@Param("spaceId") Long spaceId,
-                                         @Param("parentId") Long parentId);
+            @Param("parentId") Long parentId);
 
     boolean existsInSpace(@Param("id") Long id, @Param("spaceId") Long spaceId);
 }

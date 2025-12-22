@@ -5,6 +5,10 @@ spring:
     url: jdbc:mysql://localhost:3306/knowledgebase?useSSL=false&serverTimezone=UTC
     username: root    # TODO: 修改为你自己的 MySQL 用户名
     password: 123456  # TODO: 修改为你自己的 MySQL 密码
+  servlet:
+    multipart:
+      max-file-size: 200MB      # 单个文件最大 100MB
+      max-request-size: 200MB   # 整个请求最大 100MB
   web:
     error:
       whitelabel:
@@ -17,8 +21,8 @@ spring:
         # PostgreSQL 数据源配置
         driver-class-name: org.postgresql.Driver
         url: jdbc:postgresql://localhost:5432/knowledgebase_vector
-        username: postgres
-        password: 123456
+        username: postgres  # TODO: 修改为你自己的 PostgreSQL 用户名
+        password: 123456    # TODO: 修改为你自己的 PostgreSQL 密码
         # Vector store 配置
         initialize-schema: true
         table-name: document_chunk
@@ -26,6 +30,11 @@ spring:
         distance-type: COSINE_DISTANCE
     zhipuai:
       api-key: ${ZHIPU_API_KEY:} # TODO: 环境变量中设置你的智谱 API Key
+      chat:
+        options:
+          model: glm-4-flash        # GLM 对话模型
+          temperature: 0.7
+          max-tokens: 2000
       embeddings:
         options:
           model: embedding-3          # 智谱向量模型
@@ -53,7 +62,8 @@ azure:
   blob:
     container: knowledge-files
     base-folder: knowledge
-    connection-string: ${AZURE_STORAGE_CONNECTION_STRING:}
+    connection-string: ${AZURE_STORAGE_CONNECTION_STRING:}  # TODO: 环境变量中设置你的 Azure Blob Storage 连接字符串
+
 
 # Knowledge Vector Configuration
 knowledge:
