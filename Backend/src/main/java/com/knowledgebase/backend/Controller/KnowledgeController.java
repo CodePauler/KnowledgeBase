@@ -16,6 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -28,12 +30,12 @@ public class KnowledgeController {
 
     /**
      * @param req:
-     *     private Long spaceId;
-     *     private String title;
-     *     private KnowledgeType type;   // DOC / MANUAL
-     *     private String content;       // MANUAL: markdown；DOC: 解析纯文本(可后续补)
-     *     private Long parentId;        // 可空：顶层
-     *     private String blobKey;       // DOC 用（可空：先创建后上传也行）
+     *             private Long spaceId;
+     *             private String title;
+     *             private KnowledgeType type; // DOC / MANUAL
+     *             private String content; // MANUAL: markdown；DOC: 解析纯文本(可后续补)
+     *             private Long parentId; // 可空：顶层
+     *             private String blobKey; // DOC 用（可空：先创建后上传也行）
      * @return Result<Knowledge>
      * @description 用户上传知识 手动+文档
      */
@@ -53,12 +55,12 @@ public class KnowledgeController {
     }
 
     /**
-     * @param id: 要修改的知识id
+     * @param id:  要修改的知识id
      * @param req:
-     *     private String title;   // 知识名
-     *     private String content; // 知识内容
-     *     private Long parentId;  // 父知识id
-     *     private String blobKey;  // osskey
+     *             private String title; // 知识名
+     *             private String content; // 知识内容
+     *             private Long parentId; // 父知识id
+     *             private String blobKey; // osskey
      * @return Result<Knowledge>
      * @description 用户修改某条知识
      */
@@ -75,14 +77,14 @@ public class KnowledgeController {
     @DeleteMapping("/{id}")
     public Result<Void> deleteKnowledge(@PathVariable Long id) {
         knowledgeService.delete(id);
-        return Result.success(null,"Knowledge deleted");
+        return Result.success(null, "Knowledge deleted");
     }
 
     /**
      * @param spaceId: space的id
      * @return Result<List<Knowledge>> 该space下的所有知识列表
      * @description 用户进入某 Space 时，获取该 Space 下的所有知识列表，包括子知识
-     * 这里返回的List是排好序的：先父后子，同级按knowledgeId排序
+     *              这里返回的List是排好序的：先父后子，同级按knowledgeId排序
      */
     @GetMapping("/space/{spaceId}")
     public Result<List<Knowledge>> listBySpace(@PathVariable Long spaceId) {
@@ -90,16 +92,16 @@ public class KnowledgeController {
     }
 
     /**
-     * @param spaceId: space的id
+     * @param spaceId:  space的id
      * @param parentId: 可空，父节点id
      * @return Result<List<Knowledge>>
      * @description 用户在空间中点开某个目录/节点，
-     * 加载它的直接子节点
-     * 如果不传 parentId，加载顶层目录
+     *              加载它的直接子节点
+     *              如果不传 parentId，加载顶层目录
      */
     @GetMapping("/space/{spaceId}/children")
     public Result<List<Knowledge>> listChildren(@PathVariable Long spaceId,
-                                        @RequestParam(required = false) Long parentId) {
+            @RequestParam(required = false) Long parentId) {
         return Result.success(knowledgeService.listChildren(spaceId, parentId));
     }
 
@@ -114,18 +116,18 @@ public class KnowledgeController {
     }
 
     /**
-     * @param userId: 用户id
-     * @param id: 知识id
+     * @param userId:   用户id
+     * @param id:       知识id
      * @param category: 分类文件类别
-     * @param file: 要上传的文档文件
+     * @param file:     要上传的文档文件
      * @return Result<Knowledge>
      * @description 上传文档文件到azure blob 返回url
      */
     @PostMapping("/{id}/upload")
     public Result<FileUploadResponseDto> uploadKnowledgeFile(@RequestAttribute Long userId,
-                                                 @PathVariable Long id,
-                                                 @RequestParam(defaultValue = "knowledge") String category,
-                                                 @RequestParam("file") MultipartFile file) {
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "knowledge") String category,
+            @RequestParam("file") MultipartFile file) {
         try {
             FileUploadResponseDto res = knowledgeService.uploadOssFile(id, file, category, userId);
             return Result.success(res, "Knowledge file uploaded");
@@ -148,7 +150,15 @@ public class KnowledgeController {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType(fileDto.getContentType()));
             headers.setContentLength(fileDto.getContentLength());
-            headers.set(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileDto.getFilename() + "\"");
+
+            // Encode filename for UTF-8 support (RFC 5987)
+            // Only use filename* parameter to avoid ASCII encoding issues with Chinese
+            // characters
+            String encodedFilename = URLEncoder.encode(fileDto.getFilename(), StandardCharsets.UTF_8)
+                    .replace("+", "%20");
+            headers.set(HttpHeaders.CONTENT_DISPOSITION,
+                    "inline; filename*=UTF-8''" + encodedFilename);
+
             return ResponseEntity.ok()
                     .headers(headers)
                     .body(new InputStreamResource(fileDto.getStream()));

@@ -206,7 +206,13 @@ public class KnowledgeService {
         if (existing.getBlobKey() == null || existing.getBlobKey().isBlank()) {
             throw new IllegalArgumentException("Knowledge has no file");
         }
-        return fileStorageService.download(existing.getBlobKey());
+        FileDownloadDto fileDto = fileStorageService.download(existing.getBlobKey());
+        // Use knowledge title as filename if available, as it contains the original
+        // filename with extension
+        if (existing.getTitle() != null && !existing.getTitle().isBlank()) {
+            fileDto.setFilename(existing.getTitle());
+        }
+        return fileDto;
     }
 
     /**
