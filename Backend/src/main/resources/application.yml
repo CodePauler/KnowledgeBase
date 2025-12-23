@@ -29,12 +29,12 @@ spring:
         dimension: 1024
         distance-type: COSINE_DISTANCE
     zhipuai:
-      api-key: ${ZHIPU_API_KEY:} # TODO: 环境变量中设置你的智谱 API Key
+      api-key: ${ZHIPU_API_KEY} # TODO: 环境变量中设置你的智谱 API Key
       chat:
         options:
           model: glm-4-flash        # GLM 对话模型
           temperature: 0.7
-          max-tokens: 2000
+          max-tokens: 20000
       embeddings:
         options:
           model: embedding-3          # 智谱向量模型

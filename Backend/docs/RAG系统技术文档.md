@@ -536,7 +536,7 @@ spring:
         options:
           model: glm-4-flash
           temperature: 0.7
-          max-tokens: 2000
+          max-tokens: 20000
 
 # 向量化配置
 knowledge:
