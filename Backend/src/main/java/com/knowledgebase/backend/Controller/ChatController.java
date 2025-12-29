@@ -61,4 +61,19 @@ public class ChatController {
         chatService.clearConversation(conversationId);
         return Result.success(null, "success");
     }
+
+    /**
+     * 简单LLM调用（不使用RAG，用于AI写作助手）
+     * POST /api/knowledge/chat/simple-stream
+     */
+    @PostMapping(value = "/simple-stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> simpleStream(@RequestBody @Validated ChatRequestDto request) {
+        log.info("Received simple LLM stream request: question length={}",
+                request.getQuestion() != null ? request.getQuestion().length() : 0);
+
+        return chatService.simpleLlmStream(request.getQuestion())
+                .doOnSubscribe(subscription -> log.info("Client subscribed to simple LLM stream"))
+                .doOnComplete(() -> log.info("Simple LLM stream completed"))
+                .doOnError(error -> log.error("Simple LLM stream error", error));
+    }
 }

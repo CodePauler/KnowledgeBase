@@ -211,4 +211,34 @@ public class ChatService {
     public void clearConversation(String conversationId) {
         conversationManager.clearConversation(conversationId);
     }
+
+    /**
+     * 简单LLM流式调用（不使用RAG）
+     * 用于AI写作助手等不需要知识库检索的场景
+     */
+    public Flux<String> simpleLlmStream(String prompt) {
+        log.info("Simple LLM stream called with prompt length: {}",
+                prompt != null ? prompt.length() : 0);
+
+        ChatClient chatClient = ChatClient.builder(chatModel).build();
+
+        return chatClient.prompt()
+                .user(prompt)
+                .stream()
+                .content()
+                .doOnNext(content -> log.debug("LLM generated content chunk: {}", content))
+                .map(content -> {
+                    // 构造 SSE 格式，使用简单的转义
+                    String escaped = content
+                            .replace("\\", "\\\\")
+                            .replace("\"", "\\\"")
+                            .replace("\n", "\\n")
+                            .replace("\r", "\\r")
+                            .replace("\t", "\\t");
+                    return String.format("data: {\"content\": \"%s\"}\n\n", escaped);
+                })
+                .concatWith(Flux.just("data: [DONE]\n\n"))
+                .doOnComplete(() -> log.info("Simple LLM stream completed"))
+                .doOnError(e -> log.error("Error in simple LLM stream", e));
+    }
 }
