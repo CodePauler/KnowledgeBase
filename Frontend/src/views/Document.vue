@@ -35,7 +35,7 @@
                         <el-button>选择文件</el-button>
                     </el-upload>
                     <span v-if="docForm.fileName" style="margin-left: 12px; color:#8f959e;">{{ docForm.fileName
-                        }}</span>
+                    }}</span>
                 </el-form-item>
             </el-form>
             <template #footer>
@@ -54,23 +54,43 @@
             </template>
 
             <template v-else-if="knowledge.type === 'DOC'">
-                <div class="pdf-toolbar" v-if="!pdfLoading && !pdfError && pdfSrc">
-                    <el-button size="small" @click="zoomOut">-
-                    </el-button>
-                    <span class="zoom">{{ (scale * 100).toFixed(0) }}%</span>
-                    <el-button size="small" @click="zoomIn">+
-                    </el-button>
-                    <el-divider direction="vertical" />
-                    <el-button size="small" @click="prevPage">上一页</el-button>
-                    <span class="page">{{ page }} / {{ numPages }}</span>
-                    <el-button size="small" @click="nextPage">下一页</el-button>
-                </div>
-                <div class="pdf-container">
-                    <div v-if="pdfLoading" class="pdf-status">正在加载 PDF...</div>
-                    <div v-else-if="pdfError" class="pdf-status">{{ pdfError }}</div>
-                    <vue-pdf-embed v-else class="pdf-view" :source="pdfSrc" :page="page" @loaded="onPdfLoaded"
-                        :style="{ transform: `scale(${scale})` }" />
-                </div>
+                <!-- PDF 文件预览 -->
+                <template v-if="isPdf">
+                    <div class="pdf-toolbar" v-if="!pdfLoading && !pdfError && pdfSrc">
+                        <el-button size="small" @click="zoomOut">-</el-button>
+                        <span class="zoom">{{ (scale * 100).toFixed(0) }}%</span>
+                        <el-button size="small" @click="zoomIn">+</el-button>
+                        <el-divider direction="vertical" />
+                        <el-button size="small" @click="prevPage">上一页</el-button>
+                        <span class="page">{{ page }} / {{ numPages }}</span>
+                        <el-button size="small" @click="nextPage">下一页</el-button>
+                    </div>
+                    <div class="pdf-container">
+                        <div v-if="pdfLoading" class="pdf-status">正在加载 PDF...</div>
+                        <div v-else-if="pdfError" class="pdf-status">{{ pdfError }}</div>
+                        <vue-pdf-embed v-else class="pdf-view" :source="pdfSrc" :page="page" @loaded="onPdfLoaded"
+                            :style="{ transform: `scale(${scale})` }" />
+                    </div>
+                </template>
+                <!-- Word 文件提示 -->
+                <template v-else>
+                    <div class="doc-info-panel">
+                        <el-card>
+                            <template #header>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span>📄 {{ knowledge.title }}</span>
+                                    <el-button type="primary" size="small" @click="downloadFile">下载文件</el-button>
+                                </div>
+                            </template>
+                            <el-alert title="Word 文件预览" type="info" description="此文件为 Word 文档。请点击下载按钮获取原文件进行查看。"
+                                :closable="false" style="margin-bottom: 16px" />
+                            <div v-if="fileExtension" style="margin-bottom: 16px; color: #606266;">
+                                <strong>文件类型：</strong>
+                                <el-tag type="info">{{ fileExtension }}</el-tag>
+                            </div>
+                        </el-card>
+                    </div>
+                </template>
             </template>
         </div>
     </div>
@@ -338,25 +358,41 @@ const pdfError = ref('')
 const scale = ref(1)
 const page = ref(1)
 const numPages = ref(0)
+const isPdf = ref(false)
+const fileExtension = ref('')
 
 const loadDocPreview = async () => {
+    isPdf.value = false
     pdfError.value = ''
     pdfSrc.value = null
     pdfLoading.value = true
+
     try {
         const blob = await getKnowledgeFileBlob(knowledge.value.id)
         if (!blob || !(blob instanceof Blob)) {
             pdfError.value = '预览失败：未获取到文件数据'
             return
         }
-        if (blob.type !== 'application/pdf') {
-            pdfError.value = '该文件不是 PDF，无法在线预览'
-            return
+
+        // 检测文件类型
+        const title = knowledge.value.title || ''
+        const mimeType = blob.type || ''
+
+        if (mimeType.includes('pdf') || title.toLowerCase().endsWith('.pdf')) {
+            // PDF 文件
+            isPdf.value = true
+            pdfSrc.value = URL.createObjectURL(blob)
+        } else {
+            // Word 文件 - 只显示提示
+            isPdf.value = false
+            const match = title.match(/\.([a-zA-Z0-9]+)$/)
+            if (match) {
+                fileExtension.value = match[1].toUpperCase()
+            }
         }
-        pdfSrc.value = URL.createObjectURL(blob)
     } catch (e) {
         console.error(e)
-        pdfError.value = '加载 PDF 失败'
+        pdfError.value = '加载文件失败'
     } finally {
         pdfLoading.value = false
     }
@@ -488,5 +524,9 @@ const nextPage = () => { page.value = Math.min(page.value + 1, numPages.value ||
 .zoom,
 .page {
     color: #6b7280;
+}
+
+.doc-info-panel {
+    padding: 20px 0;
 }
 </style>

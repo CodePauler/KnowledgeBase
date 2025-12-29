@@ -77,15 +77,21 @@
         <el-dialog v-model="uploadDialogVisible" title="上传文件" width="30%">
             <el-form label-position="top" class="upload-form">
                 <el-form-item label="知识名称">
-                    <el-input v-model="uploadTitle" placeholder="请输入知识名称" />
+                    <el-input v-model="uploadTitle"
+                        :placeholder="uploadedFile ? uploadedFile.name : '请输入知识名称（默认为文件名）'" />
                 </el-form-item>
             </el-form>
-            <el-upload ref="uploadRef" class="upload-demo" drag action="#" :http-request="handleUpload" :limit="1"
-                :auto-upload="false">
+            <el-upload ref="uploadRef" class="upload-demo" drag action="#" :auto-upload="false" :limit="1"
+                @change="onFileSelect">
                 <el-icon class="el-icon--upload"><upload-filled /></el-icon>
                 <div class="el-upload__text">
                     Drop file here or <em>click to upload</em>
                 </div>
+                <template #tip v-if="uploadedFile">
+                    <div style="margin-top: 8px; color: #606266;">
+                        已选择: {{ uploadedFile.name }}
+                    </div>
+                </template>
             </el-upload>
             <template #footer>
                 <span class="dialog-footer">
@@ -124,12 +130,75 @@ const uploadDialogVisible = ref(false)
 const dialogTitle = ref('')
 const uploadRef = ref(null)
 const uploadTitle = ref('')
+const uploadedFile = ref(null) // 保存选中的文件
+
 const submitUpload = () => {
-    if (!uploadRef.value || !uploadRef.value.uploadFiles || uploadRef.value.uploadFiles.length === 0) {
+    if (!uploadedFile.value) {
         ElMessage.warning('请先选择文件')
         return
     }
-    uploadRef.value.submit()
+    // 直接触发上传逻辑
+    handleUploadConfirm()
+}
+
+const handleUploadConfirm = async () => {
+    if (!uploadedFile.value) {
+        ElMessage.warning('请先选择文件')
+        return
+    }
+
+    try {
+        // 1. 上传文件获取 blobKey
+        ElMessage.info('正在上传文件...')
+        const uploadRes = await uploadFile(uploadedFile.value)
+        if (uploadRes.code !== 200) {
+            ElMessage.error(uploadRes.msg || '文件上传失败')
+            return
+        }
+        const blobKey = uploadRes.data.blobKey
+        ElMessage.success('文件上传成功')
+
+        // 2. 创建知识记录
+        ElMessage.info('正在创建知识...')
+        const createRes = await createKnowledge({
+            spaceId: spaceId,
+            title: uploadTitle.value || uploadedFile.value.name,
+            type: 'DOC',
+            blobKey: blobKey,
+            ...(isChildUpload.value && currentNode.value ? { parentId: currentNode.value.id } : {})
+        })
+
+        if (createRes.code === 200) {
+            ElMessage.success('创建成功')
+            uploadDialogVisible.value = false
+            isChildUpload.value = false
+            // 清空状态
+            if (uploadRef.value) {
+                uploadRef.value.clearFiles()
+            }
+            uploadTitle.value = ''
+            uploadedFile.value = null
+            fetchTree()
+        } else {
+            ElMessage.error(createRes.msg || '创建知识失败')
+        }
+    } catch (error) {
+        console.error(error)
+        ElMessage.error('操作失败')
+    }
+}
+
+// 文件选择时的处理
+const onFileSelect = (file, fileList) => {
+    if (fileList.length > 0) {
+        uploadedFile.value = fileList[0].raw
+        // 自动填充知识名称（如果未输入）
+        if (!uploadTitle.value) {
+            uploadTitle.value = uploadedFile.value.name
+        }
+    } else {
+        uploadedFile.value = null
+    }
 }
 
 const createForm = reactive({
@@ -173,6 +242,12 @@ const goToChat = () => {
 const handleCreate = (command) => {
     if (command === 'upload') {
         uploadDialogVisible.value = true
+        uploadedFile.value = null
+        uploadTitle.value = ''
+        isChildUpload.value = false
+        if (uploadRef.value) {
+            uploadRef.value.clearFiles()
+        }
         return
     }
     dialogTitle.value = '新建文档'
@@ -190,6 +265,11 @@ const handleCreateChildFor = (command, parent) => {
         uploadDialogVisible.value = true
         isChildUpload.value = true
         currentNode.value = parent
+        uploadedFile.value = null
+        uploadTitle.value = ''
+        if (uploadRef.value) {
+            uploadRef.value.clearFiles()
+        }
         return
     }
     dialogTitle.value = '新建子文档'
@@ -228,44 +308,7 @@ const submitCreate = async () => {
     }
 }
 
-const handleUpload = async (options) => {
-    const { file } = options
-    try {
-        // 1. Upload File to get blobKey
-        const uploadRes = await uploadFile(file)
-        if (uploadRes.code !== 200) {
-            ElMessage.error(uploadRes.msg || '文件上传失败')
-            return
-        }
-        const blobKey = uploadRes.data.blobKey
 
-        // 2. Create Knowledge Entry with blobKey
-        const createRes = await createKnowledge({
-            spaceId: spaceId,
-            title: uploadTitle.value || file.name,
-            type: 'DOC',
-            blobKey: blobKey,
-            ...(isChildUpload.value && currentNode.value ? { parentId: currentNode.value.id } : {})
-        })
-
-        if (createRes.code === 200) {
-            ElMessage.success('上传成功')
-            uploadDialogVisible.value = false
-            isChildUpload.value = false
-            // 清空已选择文件
-            if (uploadRef.value) {
-                uploadRef.value.clearFiles()
-            }
-            uploadTitle.value = ''
-            fetchTree()
-        } else {
-            ElMessage.error(createRes.msg || '创建记录失败')
-        }
-    } catch (error) {
-        console.error(error)
-        ElMessage.error('操作失败')
-    }
-}
 // 删除指定知识
 const handleDeleteKnowledge = async (data) => {
     try {
