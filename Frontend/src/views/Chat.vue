@@ -4,43 +4,38 @@
       <div class="header-title">AI 助手</div>
       <div class="header-actions">
         <el-button circle @click="clearHistory">
-          <el-icon><Delete /></el-icon>
+          <el-icon>
+            <Delete />
+          </el-icon>
         </el-button>
         <el-button circle @click="settingsVisible = true">
-          <el-icon><Setting /></el-icon>
+          <el-icon>
+            <Setting />
+          </el-icon>
         </el-button>
       </div>
     </div>
-    
+
     <div class="chat-history" ref="chatHistoryRef">
       <div v-if="messages.length === 0" class="empty-chat">
-        <el-icon size="48" color="#dee0e3"><ChatDotRound /></el-icon>
+        <el-icon size="48" color="#dee0e3">
+          <ChatDotRound />
+        </el-icon>
         <p>你好！我是你的智能知识库助手，请问有什么可以帮你的吗？</p>
       </div>
-      <ChatMessage
-        v-for="(msg, index) in messages"
-        :key="index"
-        :role="msg.role"
-        :content="msg.content"
-        :loading="msg.loading"
-        :sources="msg.sources"
-        @click-source="handleSourceClick"
-      />
+      <ChatMessage v-for="(msg, index) in messages" :key="index" :role="msg.role" :content="msg.content"
+        :loading="msg.loading" :sources="msg.sources" @click-source="handleSourceClick" />
     </div>
 
     <div class="chat-input-area">
       <div class="input-wrapper">
-        <el-input
-          v-model="input"
-          type="textarea"
-          :rows="3"
-          placeholder="请输入你的问题... (Enter 发送, Shift + Enter 换行)"
-          resize="none"
-          @keydown.enter.prevent="handleEnter"
-        />
+        <el-input v-model="input" type="textarea" :rows="3" placeholder="请输入你的问题... (Enter 发送, Shift + Enter 换行)"
+          resize="none" @keydown.enter.prevent="handleEnter" />
         <div class="input-actions">
           <el-button type="primary" :loading="sending" @click="sendMessage" :disabled="!input.trim()">
-            <el-icon><Position /></el-icon> 发送
+            <el-icon>
+              <Position />
+            </el-icon> 发送
           </el-button>
         </div>
       </div>
@@ -82,7 +77,7 @@ const conversationId = ref('')
 
 const settings = reactive({
   topK: 3,
-  similarityThreshold: 0.5,
+  similarityThreshold: 0,
   chunksPerKnowledge: 10
 })
 
@@ -182,6 +177,7 @@ const handleSourceClick = (source) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+
   .header-title {
     font-size: 16px;
     font-weight: 600;
@@ -203,6 +199,7 @@ const handleSourceClick = (source) => {
   justify-content: center;
   align-items: center;
   color: #8f959e;
+
   p {
     margin-top: 16px;
   }
@@ -219,10 +216,11 @@ const handleSourceClick = (source) => {
   border-radius: 8px;
   padding: 12px;
   transition: border-color 0.2s;
+
   &:focus-within {
     border-color: var(--el-color-primary);
   }
-  
+
   :deep(.el-textarea__inner) {
     border: none;
     padding: 0;

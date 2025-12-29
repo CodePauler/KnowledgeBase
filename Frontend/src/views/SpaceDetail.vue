@@ -25,10 +25,10 @@
                         </el-dropdown>
                     </div>
                 </div>
-                <el-tree :data="treeData" :props="defaultProps" @node-click="handleNodeClick" node-key="id"
-                    default-expand-all highlight-current>
+                <el-tree ref="treeRef" :data="treeData" :props="defaultProps" @node-click="handleNodeClick"
+                    node-key="id" highlight-current>
                     <template #default="{ node, data }">
-                        <span class="custom-tree-node">
+                        <span class="custom-tree-node" @click.stop="handleNodeClick(data)">
                             <span class="node-left">
                                 <span class="file-icon">
                                     <component :is="iconForNode(data)" />
@@ -117,6 +117,7 @@ const defaultProps = {
 }
 const currentNode = ref(null)
 const sidebarWidth = ref(parseInt(localStorage.getItem('sidebarWidth') || '320', 10))
+const treeRef = ref(null)
 
 const createDialogVisible = ref(false)
 const uploadDialogVisible = ref(false)
@@ -157,6 +158,12 @@ const handleNodeClick = (data) => {
     if (data.type === 'DOC' || data.type === 'MANUAL') {
         router.push({ name: 'document', params: { spaceId, docId: data.id } })
     }
+}
+
+// 控制树节点展开/折叠
+const toggleNodeExpand = (node, data) => {
+    if (!treeRef.value) return
+    treeRef.value.store.nodesMap[data.id].expanded = !treeRef.value.store.nodesMap[data.id].expanded
 }
 
 const goToChat = () => {

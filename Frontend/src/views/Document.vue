@@ -49,10 +49,8 @@
         <div class="doc-content">
             <!-- MANUAL 编辑/预览 -->
             <template v-if="knowledge.type === 'MANUAL'">
-                <div v-if="isEditing" class="editor-area">
-                    <el-input v-model="editForm.content" type="textarea" :rows="20" placeholder="请输入 Markdown 内容" />
-                </div>
-                <div v-else class="markdown-body" v-html="renderedContent"></div>
+                <div v-if="!isEditing" class="markdown-body" v-html="renderedContent"></div>
+                <div v-else id="vditor-container" class="editor-area"></div>
             </template>
 
             <template v-else-if="knowledge.type === 'DOC'">
@@ -87,6 +85,8 @@ import { marked } from 'marked'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
 import VuePdfEmbed from 'vue-pdf-embed'
+import Vditor from 'vditor'
+import 'vditor/dist/index.css'
 
 const route = useRoute()
 const knowledge = ref({})
@@ -96,6 +96,7 @@ const editForm = ref({
     title: '',
     content: ''
 })
+let vditorInstance = null
 
 // DOC 更新对话框
 const docEditVisible = ref(false)
@@ -144,14 +145,66 @@ const startEdit = () => {
         content: knowledge.value.content || ''
     }
     isEditing.value = true
+    // 初始化 Vditor
+    nextTick(() => {
+        initVditor()
+    })
+}
+
+const initVditor = () => {
+    if (vditorInstance) {
+        vditorInstance.destroy()
+    }
+    vditorInstance = new Vditor('vditor-container', {
+        height: 600,
+        toolbarConfig: {
+            pin: true,
+        },
+        mode: 'sv',
+        preview: {
+            mode: 'both',
+            url: '',
+            parse: (element) => {
+                if (element.parentClassName === 'vditor-preview') {
+                    Vditor.preview(element, {
+                        transform(html) {
+                            return html
+                        },
+                    }, undefined)
+                }
+            },
+        },
+        upload: {
+            url: '',
+            max: 0,
+        },
+        input: (value) => {
+            editForm.value.content = value
+        },
+        after: () => {
+            vditorInstance.setValue(editForm.value.content)
+        },
+    })
+}
+
+const nextTick = (fn) => {
+    Promise.resolve().then(fn)
 }
 
 const cancelEdit = () => {
+    if (vditorInstance) {
+        vditorInstance.destroy()
+        vditorInstance = null
+    }
     isEditing.value = false
 }
 
 const saveEdit = async () => {
     try {
+        // 确保最新的内容被保存
+        if (vditorInstance) {
+            editForm.value.content = vditorInstance.getValue()
+        }
         const res = await updateKnowledge(knowledge.value.id, {
             title: editForm.value.title,
             content: editForm.value.content
@@ -160,6 +213,10 @@ const saveEdit = async () => {
             ElMessage.success('保存成功')
             knowledge.value = res.data
             isEditing.value = false
+            if (vditorInstance) {
+                vditorInstance.destroy()
+                vditorInstance = null
+            }
         } else {
             ElMessage.error(res.msg || '保存失败')
         }
@@ -345,6 +402,12 @@ const nextPage = () => { page.value = Math.min(page.value + 1, numPages.value ||
     font-size: 16px;
     line-height: 1.6;
     color: #1f2329;
+}
+
+.editor-area {
+    margin-top: 20px;
+    border-radius: 6px;
+    overflow: hidden;
 }
 
 .markdown-body {
