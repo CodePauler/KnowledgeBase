@@ -64,7 +64,7 @@ const normalizeMarkdown = (text) => {
   // 1. 【基础结构修复】
   // 修复标题：#后没空格 (如 "#标题" -> "# 标题")
   output = output.replace(/^(#{1,6})([^\s#])/gm, '$1 $2')
-  
+
   // 修复引用块：>后没空格 (如 ">内容" -> "> 内容")
   output = output.replace(/^>([^\s])/gm, '> $1')
 
@@ -81,10 +81,10 @@ const normalizeMarkdown = (text) => {
   // 修复前：```\n文字内容
   // 修复后：```\n\n文字内容
   output = output.replace(/(```)\s*([^\n]*?)\s*([^\n`])/g, (match, p1, p2, p3) => {
-     // 这里逻辑稍微复杂，为了防止误伤代码块内部的内容，
-     // 我们主要针对代码块闭合标记后紧跟文字的情况
-     // 但用正则很难完美区分闭合还是开启，建议只做上面的“开启前换行”通常就够了
-     return match 
+    // 这里逻辑稍微复杂，为了防止误伤代码块内部的内容，
+    // 我们主要针对代码块闭合标记后紧跟文字的情况
+    // 但用正则很难完美区分闭合还是开启，建议只做上面的“开启前换行”通常就够了
+    return match
   })
 
   // 3. 【表格修复】
@@ -95,7 +95,7 @@ const normalizeMarkdown = (text) => {
   // 4. 【粗体/斜体优化】
   // 修复粗体内部的多余空格：** 文字  ** -> **文字**
   output = output.replace(/\*\*\s+(.*?)\s+\*\*/g, '**$1**')
-  
+
   // 5. 【LaTeX 公式修复】(针对智谱/OpenAI 常见的格式差异)
   // 许多 Web 渲染组件(如 react-markdown) 不支持 \[ \] 换行格式，强制转换为 $$
   output = output
@@ -103,6 +103,15 @@ const normalizeMarkdown = (text) => {
     .replace(/\\\]/g, '$$') // 将 \] 替换为 $$
     .replace(/\\\(/g, '$')  // 将 \( 替换为 $
     .replace(/\\\)/g, '$')  // 将 \) 替换为 $
+
+  // 6. 【去除 Frontmatter 风格的分隔符】
+  // 有些模型喜欢在回答首尾加上 ---
+  if (output.trim().startsWith('---')) {
+    output = output.replace(/^\s*---\s*\n/, '')
+  }
+  if (output.trim().endsWith('---')) {
+    output = output.replace(/\n\s*---\s*$/, '')
+  }
 
   return output
 }

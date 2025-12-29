@@ -169,14 +169,18 @@ const handleSourceClick = (source) => {
   flex-direction: column;
   height: 100%;
   background-color: #fff;
+  position: relative;
 }
 
 .chat-header {
   padding: 16px 24px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f1f2f5;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  z-index: 10;
 
   .header-title {
     font-size: 16px;
@@ -188,8 +192,17 @@ const handleSourceClick = (source) => {
 .chat-history {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 24px;
+  padding: 24px;
+  padding-bottom: 140px;
+  /* Space for floating input */
   scroll-behavior: smooth;
+
+  /* Center content */
+  .chat-message {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
 }
 
 .empty-chat {
@@ -198,27 +211,36 @@ const handleSourceClick = (source) => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  color: #8f959e;
+  color: #94a3b8;
 
   p {
     margin-top: 16px;
+    font-size: 16px;
   }
 }
 
 .chat-input-area {
-  padding: 20px 24px;
-  border-top: 1px solid #f0f0f0;
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 800px;
+  z-index: 20;
 }
 
 .input-wrapper {
   position: relative;
-  border: 1px solid #dee0e3;
-  border-radius: 8px;
-  padding: 12px;
-  transition: border-color 0.2s;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
 
   &:focus-within {
-    border-color: var(--el-color-primary);
+    border-color: #2563eb;
+    box-shadow: 0 4px 24px rgba(37, 99, 235, 0.12);
   }
 
   :deep(.el-textarea__inner) {
@@ -226,13 +248,18 @@ const handleSourceClick = (source) => {
     padding: 0;
     box-shadow: none;
     resize: none;
-    max-height: 150px;
+    max-height: 200px;
+    font-size: 16px;
+    line-height: 1.6;
+    background: transparent;
   }
 }
 
 .input-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 8px;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
 }
 </style>

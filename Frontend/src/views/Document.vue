@@ -450,20 +450,27 @@ const generateWithAi = async () => {
         // 构造prompt，包含当前markdown内容作为上下文
         const currentContent = contentBeforeAi.value
         const fullPrompt = currentContent
-            ? `你是一个Markdown写作助手。当前Markdown文档内容如下：
-
+            ? `你是一个Markdown写作助手。以下是当前文档内容作为上下文：
+<context>
 ${currentContent}
-
----
+</context>
 
 用户需求：${aiPrompt.value}
 
-请直接输出符合用户需求的Markdown内容，不要添加任何说明文字，不要使用代码块包裹。如果用户要求补充或扩写，请生成可以直接追加的内容；如果用户要求修改，请生成完整的修改后内容。直接开始输出Markdown文本。`
+请直接输出符合用户需求的Markdown内容。
+1. **严禁使用 \`\`\`markdown 或 \`\`\` 包裹整个回答**。
+2. **严禁输出 --- 或其他分隔符**。
+3. 不要添加任何说明文字。
+如果用户要求补充或扩写，请生成可以直接追加的内容；如果用户要求修改，请生成完整的修改后内容。直接开始输出Markdown文本。`
             : `你是一个Markdown写作助手。
 
 用户需求：${aiPrompt.value}
 
-请直接输出符合用户需求的Markdown内容，不要添加任何说明文字，不要使用代码块包裹。直接开始输出Markdown文本。`
+请直接输出符合用户需求的Markdown内容。
+1. **严禁使用 \`\`\`markdown 或 \`\`\` 包裹整个回答**。
+2. **严禁输出 --- 或其他分隔符**。
+3. 不要添加任何说明文字。
+直接开始输出Markdown文本。`
 
         const response = await fetch('/api/knowledge/chat/simple-stream', {
             method: 'POST',
