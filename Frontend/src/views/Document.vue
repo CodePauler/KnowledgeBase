@@ -41,7 +41,7 @@
                         <el-button>选择文件</el-button>
                     </el-upload>
                     <span v-if="docForm.fileName" style="margin-left: 12px; color:#8f959e;">{{ docForm.fileName
-                    }}</span>
+                        }}</span>
                 </el-form-item>
             </el-form>
             <template #footer>
@@ -127,7 +127,13 @@
                             :style="{ transform: `scale(${scale})` }" />
                     </div>
                 </template>
-                <!-- Word 文件提示 -->
+                <!-- DOCX 预览 -->
+                <template v-else-if="isDocx">
+                    <div v-show="docxLoading" class="docx-status">正在加载 Word 文档...</div>
+                    <div v-show="docxError" class="docx-status">{{ docxError }}</div>
+                    <div v-show="!docxLoading && !docxError" id="docx-preview-container" class="docx-container"></div>
+                </template>
+                <!-- 不支持的文件类型提示 -->
                 <template v-else>
                     <div class="doc-info-panel">
                         <el-card>
@@ -137,7 +143,7 @@
                                     <el-button type="primary" size="small" @click="downloadFile">下载文件</el-button>
                                 </div>
                             </template>
-                            <el-alert title="Word 文件预览" type="info" description="此文件为 Word 文档。请点击下载按钮获取原文件进行查看。"
+                            <el-alert title="不支持的文件类型" type="info" description="此文件类型暂不支持在线预览。请点击下载按钮获取原文件进行查看。"
                                 :closable="false" style="margin-bottom: 16px" />
                             <div v-if="fileExtension" style="margin-bottom: 16px; color: #606266;">
                                 <strong>文件类型：</strong>
@@ -163,6 +169,7 @@ import 'highlight.js/styles/github.css'
 import VuePdfEmbed from 'vue-pdf-embed'
 import Vditor from 'vditor'
 import 'vditor/dist/index.css'
+import { renderAsync } from 'docx-preview'
 
 const route = useRoute()
 const knowledge = ref({})
@@ -598,18 +605,25 @@ const scale = ref(1)
 const page = ref(1)
 const numPages = ref(0)
 const isPdf = ref(false)
+const isDocx = ref(false)
+const docxLoading = ref(false)
+const docxError = ref('')
 const fileExtension = ref('')
 
 const loadDocPreview = async () => {
     isPdf.value = false
+    isDocx.value = false
     pdfError.value = ''
+    docxError.value = ''
     pdfSrc.value = null
     pdfLoading.value = true
+    docxLoading.value = true
 
     try {
         const blob = await getKnowledgeFileBlob(knowledge.value.id)
         if (!blob || !(blob instanceof Blob)) {
             pdfError.value = '预览失败：未获取到文件数据'
+            docxError.value = '预览失败：未获取到文件数据'
             return
         }
 
@@ -621,9 +635,40 @@ const loadDocPreview = async () => {
             // PDF 文件
             isPdf.value = true
             pdfSrc.value = URL.createObjectURL(blob)
+            docxLoading.value = false
+        } else if (mimeType.includes('wordprocessingml') || title.toLowerCase().endsWith('.docx')) {
+            // DOCX 文件
+            isDocx.value = true
+            pdfLoading.value = false
+            await nextTick()
+            const container = document.getElementById('docx-preview-container')
+            if (!container) {
+                docxError.value = '预览容器未找到'
+                return
+            }
+            container.innerHTML = ''
+            await renderAsync(blob, container, null, {
+                className: 'docx-wrapper',
+                inWrapper: true,
+                ignoreWidth: false,
+                ignoreHeight: false,
+                ignoreFonts: false,
+                breakPages: true,
+                ignoreLastRenderedPageBreak: true,
+                experimental: true,
+                trimXmlDeclaration: true,
+                useBase64URL: true,
+                renderHeaders: true,
+                renderFooters: true,
+                renderFootnotes: true,
+                renderEndnotes: true
+            })
         } else {
-            // Word 文件 - 只显示提示
+            // 不支持的文件类型
             isPdf.value = false
+            isDocx.value = false
+            pdfLoading.value = false
+            docxLoading.value = false
             const match = title.match(/\.([a-zA-Z0-9]+)$/)
             if (match) {
                 fileExtension.value = match[1].toUpperCase()
@@ -631,9 +676,14 @@ const loadDocPreview = async () => {
         }
     } catch (e) {
         console.error(e)
-        pdfError.value = '加载文件失败'
+        if (isPdf.value) {
+            pdfError.value = '加载 PDF 文件失败'
+        } else if (isDocx.value) {
+            docxError.value = '加载 Word 文档失败: ' + (e.message || '未知错误')
+        }
     } finally {
         pdfLoading.value = false
+        docxLoading.value = false
     }
 }
 
@@ -767,6 +817,28 @@ const nextPage = () => { page.value = Math.min(page.value + 1, numPages.value ||
 
 .doc-info-panel {
     padding: 20px 0;
+}
+
+.docx-container {
+    background: white;
+    padding: 20px;
+    border-radius: 4px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    min-height: 400px;
+}
+
+.docx-status {
+    text-align: center;
+    padding: 40px;
+    color: #8f959e;
+    font-size: 15px;
+}
+
+.pdf-status {
+    text-align: center;
+    padding: 40px;
+    color: #8f959e;
+    font-size: 15px;
 }
 
 // AI帮写样式
