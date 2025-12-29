@@ -18,7 +18,7 @@ import javax.sql.DataSource;
 @Configuration
 public class VectorStoreConfig {
 
-    @Value("${spring.ai.vectorstore.pgvector.dimension:2048}")
+    @Value("${spring.ai.vectorstore.pgvector.dimension:1536}")
     private int dimensions;
 
     @Bean

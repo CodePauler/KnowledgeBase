@@ -26,7 +26,7 @@ spring:
         # Vector store 配置
         initialize-schema: true
         table-name: document_chunk
-        dimension: 2048
+        dimension: 1536
         distance-type: COSINE_DISTANCE
     zhipuai:
       api-key: ${ZHIPU_API_KEY} # TODO: 环境变量中设置你的智谱 API Key
