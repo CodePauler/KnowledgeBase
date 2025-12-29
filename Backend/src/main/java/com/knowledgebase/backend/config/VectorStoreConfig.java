@@ -4,6 +4,7 @@ import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.pgvector.PgVectorStore;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -17,13 +18,16 @@ import javax.sql.DataSource;
 @Configuration
 public class VectorStoreConfig {
 
+    @Value("${spring.ai.vectorstore.pgvector.dimension:2048}")
+    private int dimensions;
+
     @Bean
     public VectorStore vectorStore(
             @Qualifier("postgresDataSource") DataSource postgresDataSource,
             EmbeddingModel embeddingModel) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(postgresDataSource);
         return PgVectorStore.builder(jdbcTemplate, embeddingModel)
-                .dimensions(1024)
+                .dimensions(dimensions)
                 .distanceType(PgVectorStore.PgDistanceType.COSINE_DISTANCE)
                 .initializeSchema(true)
                 .build();

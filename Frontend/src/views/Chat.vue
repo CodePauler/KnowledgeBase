@@ -77,8 +77,8 @@ const conversationId = ref('')
 
 const settings = reactive({
   topK: 3,
-  similarityThreshold: 0,
-  chunksPerKnowledge: 10
+  similarityThreshold: 0.4,
+  chunksPerKnowledge: 3
 })
 
 const scrollToBottom = () => {
