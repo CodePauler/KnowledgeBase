@@ -41,7 +41,7 @@
                         <el-button>选择文件</el-button>
                     </el-upload>
                     <span v-if="docForm.fileName" style="margin-left: 12px; color:#8f959e;">{{ docForm.fileName
-                        }}</span>
+                    }}</span>
                 </el-form-item>
             </el-form>
             <template #footer>
@@ -152,7 +152,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch, computed, inject } from 'vue'
 import { useRoute } from 'vue-router'
 import { getKnowledge, updateKnowledge, uploadFile, getKnowledgeFileBlob } from '@/api/knowledge'
 import { ElMessage } from 'element-plus'
@@ -168,6 +168,7 @@ const route = useRoute()
 const knowledge = ref({})
 const loading = ref(false)
 const isEditing = ref(false)
+const refreshTree = inject('refreshTree', null) // 注入刷新树的方法
 const editForm = ref({
     title: '',
     content: ''
@@ -300,6 +301,10 @@ const saveEdit = async () => {
                 vditorInstance.destroy()
                 vditorInstance = null
             }
+            // 刷新左侧知识树
+            if (refreshTree) {
+                refreshTree()
+            }
         } else {
             ElMessage.error(res.msg || '保存失败')
         }
@@ -394,6 +399,10 @@ const submitDocUpdate = async () => {
             docEditVisible.value = false
             // 重新加载知识内容
             await fetchKnowledge()
+            // 刷新左侧知识树
+            if (refreshTree) {
+                refreshTree()
+            }
         } else {
             ElMessage.error(res.msg || '更新失败')
         }

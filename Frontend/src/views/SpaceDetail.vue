@@ -320,6 +320,7 @@ const handleDeleteKnowledge = async (data) => {
         const res = await deleteKnowledge(data.id)
         if (res.code === 200) {
             ElMessage.success('删除成功')
+            router.push({ name: 'space-home', params: { spaceId } })
             fetchTree()
         } else {
             ElMessage.error(res.msg || '删除失败')

@@ -34,7 +34,7 @@ spring:
         options:
           model: glm-4-flash        # GLM 对话模型
           temperature: 0.7
-          max-tokens: 20000
+          max-tokens: 150000
       embeddings:
         options:
           model: embedding-3          # 智谱向量模型
