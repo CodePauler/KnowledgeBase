@@ -67,3 +67,12 @@ export function uploadFile(file) {
 export function getKnowledgeFileUrl(id) {
     return `/api/knowledge/${id}/file`
 }
+
+// 获取知识文件的二进制流（用于 PDF 预览）
+export function getKnowledgeFileBlob(id) {
+    return request({
+        url: `/knowledge/${id}/file`,
+        method: 'get',
+        responseType: 'blob'
+    })
+}

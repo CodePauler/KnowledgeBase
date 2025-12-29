@@ -3,7 +3,9 @@
     <el-header class="app-header">
       <div class="header-left">
         <div class="logo" @click="$router.push('/')">
-          <el-icon><Reading /></el-icon>
+          <el-icon>
+            <Reading />
+          </el-icon>
           <span>智能知识库</span>
         </div>
       </div>
@@ -75,10 +77,11 @@ const handleCommand = (command) => {
   .logo {
     display: flex;
     align-items: center;
-    font-size: 18px;
+    font-size: 22px;
     font-weight: 600;
     color: #1f2329;
     cursor: pointer;
+
     .el-icon {
       margin-right: 8px;
       color: var(--el-color-primary);
@@ -92,6 +95,7 @@ const handleCommand = (command) => {
     align-items: center;
     cursor: pointer;
     color: #1f2329;
+
     .username {
       margin: 0 8px;
     }
