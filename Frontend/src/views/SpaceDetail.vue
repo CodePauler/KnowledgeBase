@@ -366,20 +366,22 @@ const iconForNode = (data) => {
 .space-detail-layout {
     display: flex;
     height: 100%;
+    overflow: hidden;
 }
 
 .sidebar {
-    /* 宽度通过响应式绑定控制 */
-    background-color: #fff;
-    border-right: 1px solid #dee0e3;
+    background-color: #f7f8fa;
+    border-right: 1px solid #f1f2f5;
     display: flex;
     flex-direction: column;
     position: relative;
+    min-width: 200px;
+    max-width: 500px;
 }
 
 .sidebar-header {
     padding: 16px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid #f1f2f5;
 }
 
 .full-width {
@@ -389,21 +391,22 @@ const iconForNode = (data) => {
 .tree-container {
     flex: 1;
     overflow-y: auto;
-    padding: 10px 0;
+    padding: 12px 0;
 }
 
 .tree-header {
-    padding: 0 16px 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 16px;
+    padding: 0 16px 12px;
+    font-size: 14px;
     font-weight: 600;
-    color: #1f2329;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 
     .tree-title {
-        font-size: 18px;
-        font-weight: 700;
+        font-size: 12px;
     }
 
     .tree-actions {
@@ -414,14 +417,11 @@ const iconForNode = (data) => {
 
     .add-icon {
         cursor: pointer;
+        color: #64748b;
+        font-size: 16px;
 
         &:hover {
-            color: var(--el-color-primary);
-        }
-
-        &.disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
+            color: #2563eb;
         }
     }
 }
@@ -436,28 +436,20 @@ const iconForNode = (data) => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    /* 左右分布：左侧信息 + 右侧操作 */
-    font-size: 18px;
-    padding: 8px 16px;
-    /* 增加垂直内边距 */
-    min-height: 40px;
-    /* 增加单条节点的垂直高度 */
+    font-size: 14px;
+    padding: 8px 12px;
     width: 100%;
-    /* 让节点块占满可用宽度，便于右对齐 */
-
-    .el-icon {
-        margin-right: 6px;
-        color: #8f959e;
-    }
+    border-radius: 6px;
+    margin: 0 8px;
+    width: calc(100% - 16px);
+    color: #334155;
 
     .node-left {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         min-width: 0;
         flex: 1;
-        /* 推动右侧操作贴近右边 */
-        /* 允许内容收缩以正确溢出省略 */
     }
 
     .node-label {
@@ -470,24 +462,53 @@ const iconForNode = (data) => {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        margin-right: 6px;
-        width: 18px;
-        height: 18px;
+        width: 16px;
+        height: 16px;
+        color: #64748b;
     }
 
     .node-actions {
-        display: inline-flex;
+        display: none;
         align-items: center;
         gap: 6px;
-        margin-left: 12px;
+        margin-left: 8px;
         flex-shrink: 0;
-        /* 保持右侧操作不被挤压隐藏 */
+    }
+
+    &:hover {
+        .node-actions {
+            display: inline-flex;
+        }
     }
 }
 
 :deep(.el-tree) {
-    padding-right: 8px;
-    /* 为右侧操作留出一些空间 */
+    background: transparent;
+}
+
+:deep(.el-tree-node__content) {
+    height: 36px;
+    background: transparent !important;
+    margin-bottom: 2px;
+
+    &:hover {
+        background: transparent;
+
+        .custom-tree-node {
+            background-color: #e2e8f0;
+        }
+    }
+}
+
+:deep(.el-tree-node.is-current > .el-tree-node__content) {
+    .custom-tree-node {
+        background-color: #e0e7ff;
+        color: #2563eb;
+
+        .file-icon {
+            color: #2563eb;
+        }
+    }
 }
 
 .sidebar-resizer {
@@ -497,12 +518,10 @@ const iconForNode = (data) => {
     width: 8px;
     height: 100%;
     cursor: col-resize;
-}
+    z-index: 10;
 
-/* 调整 Element Plus Tree 节点的默认内容高度与内边距 */
-:deep(.el-tree-node__content) {
-    padding: 0;
-    /* 让自定义节点块控制内边距与高度 */
-    height: auto;
+    &:hover {
+        background: rgba(37, 99, 235, 0.1);
+    }
 }
 </style>

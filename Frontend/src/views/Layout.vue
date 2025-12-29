@@ -6,7 +6,7 @@
           <el-icon>
             <Reading />
           </el-icon>
-          <span>智能知识库</span>
+          <span>享记</span>
         </div>
       </div>
       <div class="header-right">
@@ -65,26 +65,30 @@ const handleCommand = (command) => {
 
 .app-header {
   background-color: #fff;
-  border-bottom: 1px solid #dee0e3;
+  border-bottom: 1px solid #f1f2f5;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
-  height: 60px;
+  padding: 0 24px;
+  height: 56px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  z-index: 100;
 }
 
 .header-left {
   .logo {
     display: flex;
     align-items: center;
-    font-size: 22px;
-    font-weight: 600;
+    font-size: 20px;
+    font-weight: 700;
     color: #1f2329;
     cursor: pointer;
+    letter-spacing: -0.5px;
 
     .el-icon {
       margin-right: 8px;
-      color: var(--el-color-primary);
+      color: #2563eb;
+      font-size: 24px;
     }
   }
 }
@@ -95,9 +99,18 @@ const handleCommand = (command) => {
     align-items: center;
     cursor: pointer;
     color: #1f2329;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: #f5f6f7;
+    }
 
     .username {
       margin: 0 8px;
+      font-weight: 500;
+      font-size: 14px;
     }
   }
 }
@@ -105,7 +118,7 @@ const handleCommand = (command) => {
 .app-main {
   padding: 0;
   flex: 1;
-  background-color: #f5f6f7;
+  background-color: #fff;
   overflow: hidden;
 }
 </style>

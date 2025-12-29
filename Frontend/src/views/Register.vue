@@ -103,10 +103,12 @@ const handleRegister = async () => {
 
 .auth-header {
   text-align: center;
+
   h2 {
     margin: 0;
     color: var(--el-color-primary);
   }
+
   p {
     margin: 10px 0 0;
     color: #606266;
@@ -120,9 +122,11 @@ const handleRegister = async () => {
 .auth-footer {
   text-align: center;
   margin-top: 10px;
+
   a {
     color: var(--el-color-primary);
     text-decoration: none;
+
     &:hover {
       text-decoration: underline;
     }

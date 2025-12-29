@@ -3,18 +3,14 @@
     <div class="space-header">
       <h2>我的空间</h2>
       <el-button type="primary" @click="dialogVisible = true">
-        <el-icon><Plus /></el-icon> 新建空间
+        <el-icon>
+          <Plus />
+        </el-icon> 新建空间
       </el-button>
     </div>
-    
+
     <div class="space-grid" v-loading="loading">
-      <el-card 
-        v-for="space in spaces" 
-        :key="space.id" 
-        class="space-card" 
-        shadow="hover"
-        @click="goToSpace(space.id)"
-      >
+      <el-card v-for="space in spaces" :key="space.id" class="space-card" shadow="hover" @click="goToSpace(space.id)">
         <div class="space-card-header">
           <div class="space-icon">{{ space.name.charAt(0).toUpperCase() }}</div>
           <div class="space-info">
@@ -116,6 +112,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+
   h2 {
     margin: 0;
     color: #1f2329;
@@ -131,6 +128,7 @@ onMounted(() => {
 .space-card {
   cursor: pointer;
   transition: all 0.3s;
+
   &:hover {
     transform: translateY(-2px);
   }
@@ -139,6 +137,7 @@ onMounted(() => {
 .space-card-header {
   display: flex;
   align-items: center;
+
   .space-icon {
     width: 48px;
     height: 48px;
@@ -152,12 +151,14 @@ onMounted(() => {
     font-weight: bold;
     margin-right: 16px;
   }
+
   .space-info {
     h3 {
       margin: 0 0 4px;
       font-size: 16px;
       color: #1f2329;
     }
+
     p {
       margin: 0;
       font-size: 14px;
