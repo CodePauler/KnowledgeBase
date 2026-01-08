@@ -283,8 +283,6 @@ public class KnowledgeService {
             return knowledges.stream()
                     .map(knowledge -> {
                         List<Document> relatedChunks = groupedByKnowledge.get(knowledge.getId());
-                        // Spring AI PgVector typically returns 'distance' (cosine distance). Convert to
-                        // similarity.
                         double avgScore = relatedChunks.stream()
                                 .mapToDouble(doc -> {
                                     Object distObj = doc.getMetadata().get("distance");

@@ -176,7 +176,7 @@ public class ChatService {
             KnowledgeSearchResultDto result = searchResults.get(i);
             context.append(String.format("\n【资料%d：%s】\n", i + 1, result.getTitle()));
 
-            // 取每个知识的前 N 个最相关片段（可配置）
+            // 取每个知识的前 N 个最相关片段
             List<Document> topChunks = result.getChunks().stream()
                     .limit(chunksPerKnowledge != null ? chunksPerKnowledge : 5)
                     .toList();
